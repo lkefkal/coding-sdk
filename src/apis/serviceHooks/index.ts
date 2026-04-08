@@ -1,4 +1,16 @@
 export {
+  action as createServiceHookAction,
+  createServiceHook,
+  createServiceHookSpec,
+  requestSchema as createServiceHookRequestSchema,
+  responseSchema as createServiceHookResponseSchema,
+} from "./createServiceHook.js";
+export type {
+  CreateServiceHookRequest,
+  CreateServiceHookResponse,
+} from "./createServiceHook.js";
+
+export {
   action as describeEventsAction,
   describeEvents,
   describeEventsSpec,
