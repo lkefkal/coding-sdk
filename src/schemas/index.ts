@@ -3,15 +3,21 @@ export type { CurrentUser } from "./user.js";
 
 export {
   describeMergeRequestsDataSchema,
+  mergeRequestDiffFileSchema,
+  mergeRequestDiffSchema,
   mergeRequestInfoSchema,
   mergeRequestListItemSchema,
+  mergeRequestLogSchema,
   mergeRequestMissionSchema,
   mergeRequestUserSchema,
 } from "./mergeRequests.js";
 export type {
   DescribeMergeRequestsData,
+  MergeRequestDiff,
+  MergeRequestDiffFile,
   MergeRequestInfo,
   MergeRequestListItem,
+  MergeRequestLog,
   MergeRequestMission,
   MergeRequestUser,
 } from "./mergeRequests.js";
