@@ -22,12 +22,16 @@ export type {
 
 export {
   serviceHookEventSchema,
+  serviceHookLogPageSchema,
+  serviceHookLogSchema,
   serviceHookPageSchema,
   serviceHookSchema,
   serviceHookUserSchema,
 } from "./serviceHooks.js";
 export type {
   ServiceHookEvent,
+  ServiceHookLog,
+  ServiceHookLogPage,
   ServiceHook,
   ServiceHookPage,
   ServiceHookUser,

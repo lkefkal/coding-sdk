@@ -45,33 +45,13 @@
       "types": "./dist/apis/user/index.d.ts",
       "import": "./dist/apis/user/index.js"
     },
-    "./apis/user/describeCodingCurrentUser": {
-      "types": "./dist/apis/user/describeCodingCurrentUser.d.ts",
-      "import": "./dist/apis/user/describeCodingCurrentUser.js"
-    },
     "./apis/issues": {
       "types": "./dist/apis/issues/index.d.ts",
       "import": "./dist/apis/issues/index.js"
     },
-    "./apis/issues/describeIssueList": {
-      "types": "./dist/apis/issues/describeIssueList.d.ts",
-      "import": "./dist/apis/issues/describeIssueList.js"
-    },
     "./apis/serviceHooks": {
       "types": "./dist/apis/serviceHooks/index.d.ts",
       "import": "./dist/apis/serviceHooks/index.js"
-    },
-    "./apis/serviceHooks/describeEvents": {
-      "types": "./dist/apis/serviceHooks/describeEvents.d.ts",
-      "import": "./dist/apis/serviceHooks/describeEvents.js"
-    },
-    "./apis/serviceHooks/describeServiceHook": {
-      "types": "./dist/apis/serviceHooks/describeServiceHook.d.ts",
-      "import": "./dist/apis/serviceHooks/describeServiceHook.js"
-    },
-    "./apis/serviceHooks/describeServiceHooks": {
-      "types": "./dist/apis/serviceHooks/describeServiceHooks.d.ts",
-      "import": "./dist/apis/serviceHooks/describeServiceHooks.js"
     },
     "./package.json": "./package.json"
   },

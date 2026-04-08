@@ -11,6 +11,30 @@ export type {
 } from "./describeEvents.js";
 
 export {
+  action as describeServiceHookLogsAction,
+  describeServiceHookLogs,
+  describeServiceHookLogsSpec,
+  requestSchema as describeServiceHookLogsRequestSchema,
+  responseSchema as describeServiceHookLogsResponseSchema,
+} from "./describeServiceHookLogs.js";
+export type {
+  DescribeServiceHookLogsRequest,
+  DescribeServiceHookLogsResponse,
+} from "./describeServiceHookLogs.js";
+
+export {
+  action as enabledServiceHookAction,
+  enabledServiceHook,
+  enabledServiceHookSpec,
+  requestSchema as enabledServiceHookRequestSchema,
+  responseSchema as enabledServiceHookResponseSchema,
+} from "./enabledServiceHook.js";
+export type {
+  EnabledServiceHookRequest,
+  EnabledServiceHookResponse,
+} from "./enabledServiceHook.js";
+
+export {
   action as describeServiceHookAction,
   describeServiceHook,
   describeServiceHookSpec,

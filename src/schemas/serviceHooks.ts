@@ -55,6 +55,27 @@ export const serviceHookSchema = Schema.Struct({
 export type ServiceHook = Schema.Schema.Type<typeof serviceHookSchema>;
 
 /**
+ * 表示单条 Service Hook 发送记录的共享 schema。
+ */
+export const serviceHookLogSchema = Schema.Struct({
+  CreatedAt: Schema.NullOr(Schema.Number),
+  Event: Schema.NullOr(Schema.String),
+  Id: Schema.String,
+  RequestContent: Schema.NullOr(Schema.String),
+  RequestHeaders: Schema.NullOr(Schema.String),
+  RequestId: Schema.NullOr(Schema.String),
+  ResponseAt: Schema.NullOr(Schema.Number),
+  ResponseBody: Schema.NullOr(Schema.String),
+  ResponseHeaders: Schema.NullOr(Schema.String),
+  ResponseStatus: Schema.NullOr(Schema.Number),
+  SendAt: Schema.NullOr(Schema.Number),
+  ServiceHookId: Schema.NullOr(Schema.String),
+  Status: Schema.NullOr(Schema.Number),
+});
+
+export type ServiceHookLog = Schema.Schema.Type<typeof serviceHookLogSchema>;
+
+/**
  * 表示 Service Hook 分页结果的共享 schema。
  */
 export const serviceHookPageSchema = Schema.Struct({
@@ -65,3 +86,15 @@ export const serviceHookPageSchema = Schema.Struct({
 });
 
 export type ServiceHookPage = Schema.Schema.Type<typeof serviceHookPageSchema>;
+
+/**
+ * 表示 Service Hook 发送记录分页结果的共享 schema。
+ */
+export const serviceHookLogPageSchema = Schema.Struct({
+  Log: Schema.Array(serviceHookLogSchema),
+  PageNumber: Schema.Number,
+  PageSize: Schema.Number,
+  TotalCount: Schema.Number,
+});
+
+export type ServiceHookLogPage = Schema.Schema.Type<typeof serviceHookLogPageSchema>;
