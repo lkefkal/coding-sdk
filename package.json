@@ -82,7 +82,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "verify": "npm run typecheck && npm run test && npm run build && npm pack --dry-run",
-    "prepack": "npm run build"
+    "prepare": "npm run build"
   },
   "dependencies": {
     "effect": "^3.13.10"
