@@ -23,6 +23,18 @@ export type {
 } from "./describeIssueCommentList.js";
 
 export {
+  action as describeIssueCustomFieldLogListAction,
+  describeIssueCustomFieldLogList,
+  describeIssueCustomFieldLogListSpec,
+  requestSchema as describeIssueCustomFieldLogListRequestSchema,
+  responseSchema as describeIssueCustomFieldLogListResponseSchema,
+} from "./describeIssueCustomFieldLogList.js";
+export type {
+  DescribeIssueCustomFieldLogListRequest,
+  DescribeIssueCustomFieldLogListResponse,
+} from "./describeIssueCustomFieldLogList.js";
+
+export {
   action as describeIssueReferenceResourcesAction,
   describeIssueReferenceResources,
   describeIssueReferenceResourcesSpec,
@@ -45,6 +57,18 @@ export type {
   DescribeIssueLogListRequest,
   DescribeIssueLogListResponse,
 } from "./describeIssueLogList.js";
+
+export {
+  action as describeIssueStatusChangeLogListAction,
+  describeIssueStatusChangeLogList,
+  describeIssueStatusChangeLogListSpec,
+  requestSchema as describeIssueStatusChangeLogListRequestSchema,
+  responseSchema as describeIssueStatusChangeLogListResponseSchema,
+} from "./describeIssueStatusChangeLogList.js";
+export type {
+  DescribeIssueStatusChangeLogListRequest,
+  DescribeIssueStatusChangeLogListResponse,
+} from "./describeIssueStatusChangeLogList.js";
 
 export {
   action as describeIssueWorkLogListAction,

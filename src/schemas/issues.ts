@@ -187,6 +187,40 @@ export const resourceReferenceSchema = Schema.Struct({
   ResourceType: Schema.optional(Schema.NullOr(Schema.String)),
 });
 
+export const issueStatusSchema = Schema.Struct({
+  CreatedAt: Schema.Number,
+  Description: Schema.NullOr(Schema.String),
+  Id: Schema.Number,
+  Index: Schema.Number,
+  IsSystem: Schema.Boolean,
+  Name: Schema.String,
+  Type: Schema.String,
+  UpdatedAt: Schema.Number,
+});
+
+export const issueStatusChangeLogSchema = Schema.Struct({
+  CreatedAt: Schema.optional(Schema.NullOr(Schema.Number)),
+  IssueCode: Schema.optional(Schema.NullOr(Schema.Number)),
+  IssueStatus: Schema.optional(Schema.NullOr(issueStatusSchema)),
+  StatusId: Schema.optional(Schema.NullOr(Schema.Number)),
+  StatusName: Schema.optional(Schema.NullOr(Schema.String)),
+});
+
+export const issueStatusChangeLogListSchema = Schema.Struct({
+  List: Schema.optional(Schema.NullOr(Schema.Array(issueStatusChangeLogSchema))),
+});
+
+export const customFieldChangeLogSchema = Schema.Struct({
+  ActionType: Schema.optional(Schema.NullOr(Schema.String)),
+  Creator: Schema.optional(Schema.NullOr(Schema.Number)),
+  FieldId: Schema.optional(Schema.NullOr(Schema.Number)),
+  FieldName: Schema.optional(Schema.NullOr(Schema.String)),
+  FieldType: Schema.optional(Schema.NullOr(Schema.String)),
+  FieldValue: Schema.optional(Schema.NullOr(Schema.String)),
+  IssueId: Schema.optional(Schema.NullOr(Schema.Number)),
+  UpdatedAt: Schema.optional(Schema.NullOr(Schema.Number)),
+});
+
 export const issueDetailSchema = Schema.Struct({
   Assignee: issueUserSchema,
   Assignees: Schema.optional(Schema.Array(issueUserSchema)),
@@ -258,6 +292,7 @@ export const issueListItemSchema = Schema.Struct({
 export type IssueCondition = Schema.Schema.Type<typeof issueConditionSchema>;
 export type IssueCustomField = Schema.Schema.Type<typeof issueCustomFieldSchema>;
 export type ApiIssueLogIssueLog = Schema.Schema.Type<typeof apiIssueLogIssueLogSchema>;
+export type CustomFieldChangeLog = Schema.Schema.Type<typeof customFieldChangeLogSchema>;
 export type IssueDefectType = Schema.Schema.Type<typeof issueDefectTypeSchema>;
 export type IssueComment = Schema.Schema.Type<typeof issueCommentSchema>;
 export type IssueDetail = Schema.Schema.Type<typeof issueDetailSchema>;
@@ -269,6 +304,9 @@ export type IssueProject = Schema.Schema.Type<typeof issueProjectSchema>;
 export type IssueProjectLabel = Schema.Schema.Type<typeof issueProjectLabelSchema>;
 export type IssueProjectModule = Schema.Schema.Type<typeof issueProjectModuleSchema>;
 export type IssueRequirementType = Schema.Schema.Type<typeof issueRequirementTypeSchema>;
+export type IssueStatus = Schema.Schema.Type<typeof issueStatusSchema>;
+export type IssueStatusChangeLog = Schema.Schema.Type<typeof issueStatusChangeLogSchema>;
+export type IssueStatusChangeLogList = Schema.Schema.Type<typeof issueStatusChangeLogListSchema>;
 export type IssueWorkLog = Schema.Schema.Type<typeof issueWorkLogSchema>;
 export type ResourceReference = Schema.Schema.Type<typeof resourceReferenceSchema>;
 export type IssueSimpleData = Schema.Schema.Type<typeof issueSimpleDataSchema>;

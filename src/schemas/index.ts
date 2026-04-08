@@ -3,6 +3,7 @@ export type { CurrentUser } from "./user.js";
 
 export {
   apiIssueLogIssueLogSchema,
+  customFieldChangeLogSchema,
   issueDefectTypeSchema,
   issueCommentSchema,
   issueDetailSchema,
@@ -16,6 +17,9 @@ export {
   issueProjectModuleSchema,
   issueProjectSchema,
   issueRequirementTypeSchema,
+  issueStatusChangeLogListSchema,
+  issueStatusChangeLogSchema,
+  issueStatusSchema,
   issueWorkLogSchema,
   resourceReferenceSchema,
   issueSimpleDataSchema,
@@ -28,6 +32,7 @@ export {
 } from "./issues.js";
 export type {
   ApiIssueLogIssueLog,
+  CustomFieldChangeLog,
   IssueCondition,
   IssueComment,
   IssueCustomField,
@@ -41,6 +46,9 @@ export type {
   IssueProjectLabel,
   IssueProjectModule,
   IssueRequirementType,
+  IssueStatus,
+  IssueStatusChangeLog,
+  IssueStatusChangeLogList,
   IssueWorkLog,
   ResourceReference,
   IssueSimpleData,

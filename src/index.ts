@@ -29,6 +29,7 @@ export {
 } from "./core/errors.js";
 export {
   apiIssueLogIssueLogSchema,
+  customFieldChangeLogSchema,
   currentUserSchema,
   issueConditionSchema,
   issueCommentSchema,
@@ -43,6 +44,9 @@ export {
   issueProjectModuleSchema,
   issueProjectSchema,
   issueRequirementTypeSchema,
+  issueStatusChangeLogListSchema,
+  issueStatusChangeLogSchema,
+  issueStatusSchema,
   issueWorkLogSchema,
   resourceReferenceSchema,
   issueSimpleDataSchema,
@@ -66,6 +70,7 @@ export {
 } from "./schemas/index.js";
 export type {
   ApiIssueLogIssueLog,
+  CustomFieldChangeLog,
   CurrentUser,
   IssueCondition,
   IssueComment,
@@ -80,6 +85,9 @@ export type {
   IssueProjectLabel,
   IssueProjectModule,
   IssueRequirementType,
+  IssueStatus,
+  IssueStatusChangeLog,
+  IssueStatusChangeLogList,
   IssueWorkLog,
   ResourceReference,
   IssueSimpleData,
