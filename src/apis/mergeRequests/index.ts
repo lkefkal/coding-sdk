@@ -11,6 +11,18 @@ export type {
 } from "./describeDepotMergeRequests.js";
 
 export {
+  action as describeGitMergeRequestDiffDetailAction,
+  describeGitMergeRequestDiffDetail,
+  describeGitMergeRequestDiffDetailSpec,
+  requestSchema as describeGitMergeRequestDiffDetailRequestSchema,
+  responseSchema as describeGitMergeRequestDiffDetailResponseSchema,
+} from "./describeGitMergeRequestDiffDetail.js";
+export type {
+  DescribeGitMergeRequestDiffDetailRequest,
+  DescribeGitMergeRequestDiffDetailResponse,
+} from "./describeGitMergeRequestDiffDetail.js";
+
+export {
   action as describeMergeRequestAction,
   describeMergeRequest,
   describeMergeRequestSpec,
@@ -21,6 +33,18 @@ export type {
   DescribeMergeRequestRequest,
   DescribeMergeRequestResponse,
 } from "./describeMergeRequest.js";
+
+export {
+  action as describeMergeRequestFileDiffAction,
+  describeMergeRequestFileDiff,
+  describeMergeRequestFileDiffSpec,
+  requestSchema as describeMergeRequestFileDiffRequestSchema,
+  responseSchema as describeMergeRequestFileDiffResponseSchema,
+} from "./describeMergeRequestFileDiff.js";
+export type {
+  DescribeMergeRequestFileDiffRequest,
+  DescribeMergeRequestFileDiffResponse,
+} from "./describeMergeRequestFileDiff.js";
 
 export {
   action as describeGitMergeRequestDiffsAction,
