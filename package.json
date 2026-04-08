@@ -72,14 +72,17 @@
     "./package.json": "./package.json"
   },
   "scripts": {
-    "build": "rimraf dist && tsc -p tsconfig.build.json",
+    "clean": "rimraf dist",
+    "build": "tsup",
+    "build:watch": "tsup --watch",
     "codegen:manifest": "node ./scripts/codegen/extract-action-manifest.mjs",
     "codegen:action": "node ./scripts/codegen/generate-action-module.mjs",
     "codegen:schema": "node ./scripts/codegen/generate-shared-schema-module.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "prepare": "npm run build"
+    "verify": "npm run typecheck && npm run test && npm run build && npm pack --dry-run",
+    "prepack": "npm run build"
   },
   "dependencies": {
     "effect": "^3.13.10"
@@ -87,6 +90,7 @@
   "devDependencies": {
     "@types/node": "^22.15.3",
     "rimraf": "^6.0.1",
+    "tsup": "^8.3.6",
     "typescript": "^5.8.3",
     "vitest": "^3.1.2",
     "yaml": "^2.8.1"
