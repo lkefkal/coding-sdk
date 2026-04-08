@@ -11,6 +11,66 @@ export type {
 } from "./describeCodingProjects.js";
 
 export {
+  action as describeProjectCredentialsAction,
+  describeProjectCredentials,
+  describeProjectCredentialsSpec,
+  requestSchema as describeProjectCredentialsRequestSchema,
+  responseSchema as describeProjectCredentialsResponseSchema,
+} from "./describeProjectCredentials.js";
+export type {
+  DescribeProjectCredentialsRequest,
+  DescribeProjectCredentialsResponse,
+} from "./describeProjectCredentials.js";
+
+export {
+  action as describeProjectDepotsAction,
+  describeProjectDepots,
+  describeProjectDepotsSpec,
+  requestSchema as describeProjectDepotsRequestSchema,
+  responseSchema as describeProjectDepotsResponseSchema,
+} from "./describeProjectDepots.js";
+export type {
+  DescribeProjectDepotsRequest,
+  DescribeProjectDepotsResponse,
+} from "./describeProjectDepots.js";
+
+export {
+  action as describeProjectMemberPrincipalsAction,
+  describeProjectMemberPrincipals,
+  describeProjectMemberPrincipalsSpec,
+  requestSchema as describeProjectMemberPrincipalsRequestSchema,
+  responseSchema as describeProjectMemberPrincipalsResponseSchema,
+} from "./describeProjectMemberPrincipals.js";
+export type {
+  DescribeProjectMemberPrincipalsRequest,
+  DescribeProjectMemberPrincipalsResponse,
+} from "./describeProjectMemberPrincipals.js";
+
+export {
+  action as describeProjectMembersAction,
+  describeProjectMembers,
+  describeProjectMembersSpec,
+  requestSchema as describeProjectMembersRequestSchema,
+  responseSchema as describeProjectMembersResponseSchema,
+} from "./describeProjectMembers.js";
+export type {
+  DescribeProjectMembersRequest,
+  DescribeProjectMembersResponse,
+} from "./describeProjectMembers.js";
+
+export {
+  action as describeProjectMergeRequestsAction,
+  describeProjectMergeRequests,
+  describeProjectMergeRequestsSpec,
+  requestSchema as describeProjectMergeRequestsRequestSchema,
+  responseSchema as describeProjectMergeRequestsResponseSchema,
+} from "./describeProjectMergeRequests.js";
+export type {
+  DescribeProjectMergeRequestsRequest,
+  DescribeProjectMergeRequestsResponse,
+} from "./describeProjectMergeRequests.js";
+
+export {
   action as describeOneProjectAction,
   describeOneProject,
   describeOneProjectSpec,

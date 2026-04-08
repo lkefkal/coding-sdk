@@ -1,8 +1,38 @@
 export { currentUserSchema } from "./user.js";
 export type { CurrentUser } from "./user.js";
 
-export { projectSchema, projectsDataSchema } from "./projects.js";
-export type { Project, ProjectsData } from "./projects.js";
+export {
+  codingCIProjectDepotSchema,
+  describeProjectCredentialsDataSchema,
+  describeProjectDepotsDataSchema,
+  projectCredentialSchema,
+  projectMemberDataSchema,
+  projectMemberDepartmentMemberSchema,
+  projectMemberMemberRefSchema,
+  projectMemberUserDataSchema,
+  projectPolicySchema,
+  projectPrincipalDataSchema,
+  projectPrincipalRespSchema,
+  projectRoleSchema,
+  projectSchema,
+  projectsDataSchema,
+} from "./projects.js";
+export type {
+  CodingCIProjectDepot,
+  DescribeProjectCredentialsData,
+  DescribeProjectDepotsData,
+  Project,
+  ProjectCredential,
+  ProjectMemberData,
+  ProjectMemberDepartmentMember,
+  ProjectMemberMemberRef,
+  ProjectMemberUserData,
+  ProjectPolicy,
+  ProjectPrincipalData,
+  ProjectPrincipalResp,
+  ProjectRole,
+  ProjectsData,
+} from "./projects.js";
 
 export {
   describeMergeRequestsDataSchema,
