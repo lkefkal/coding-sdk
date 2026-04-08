@@ -2,7 +2,10 @@ import { Schema } from "effect";
 
 import type { CodingClient, InvokeOptions } from "../../client/types.js";
 import { defineActionSpec } from "../../core/actionSpec.js";
-import { serviceHookLogPageSchema } from "../../schemas/serviceHooks.js";
+import {
+  serviceHookLogPageSchema,
+  serviceHookTargetTypeSchema,
+} from "../../schemas/serviceHooks.js";
 
 export const action = "DescribeServiceHookLogs";
 
@@ -11,7 +14,7 @@ export const requestSchema = Schema.Struct({
   PageNumber: Schema.Number,
   PageSize: Schema.Number,
   ProjectId: Schema.Number,
-  TargetType: Schema.optional(Schema.Literal("PROJECT", "SPACE_NODE", "PROGRAM")),
+  TargetType: Schema.optional(serviceHookTargetTypeSchema),
 });
 
 export const responseSchema = Schema.Struct({

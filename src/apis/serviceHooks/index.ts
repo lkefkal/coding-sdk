@@ -11,6 +11,18 @@ export type {
 } from "./describeEvents.js";
 
 export {
+  action as deleteServiceHookAction,
+  deleteServiceHook,
+  deleteServiceHookSpec,
+  requestSchema as deleteServiceHookRequestSchema,
+  responseSchema as deleteServiceHookResponseSchema,
+} from "./deleteServiceHook.js";
+export type {
+  DeleteServiceHookRequest,
+  DeleteServiceHookResponse,
+} from "./deleteServiceHook.js";
+
+export {
   action as describeServiceHookLogsAction,
   describeServiceHookLogs,
   describeServiceHookLogsSpec,
@@ -21,6 +33,30 @@ export type {
   DescribeServiceHookLogsRequest,
   DescribeServiceHookLogsResponse,
 } from "./describeServiceHookLogs.js";
+
+export {
+  action as modifyServiceHookAction,
+  modifyServiceHook,
+  modifyServiceHookSpec,
+  requestSchema as modifyServiceHookRequestSchema,
+  responseSchema as modifyServiceHookResponseSchema,
+} from "./modifyServiceHook.js";
+export type {
+  ModifyServiceHookRequest,
+  ModifyServiceHookResponse,
+} from "./modifyServiceHook.js";
+
+export {
+  action as pingServiceHookAction,
+  pingServiceHook,
+  pingServiceHookSpec,
+  requestSchema as pingServiceHookRequestSchema,
+  responseSchema as pingServiceHookResponseSchema,
+} from "./pingServiceHook.js";
+export type {
+  PingServiceHookRequest,
+  PingServiceHookResponse,
+} from "./pingServiceHook.js";
 
 export {
   action as enabledServiceHookAction,

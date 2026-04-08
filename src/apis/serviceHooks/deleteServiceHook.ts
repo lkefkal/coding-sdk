@@ -7,41 +7,40 @@ import {
   serviceHookTargetTypeSchema,
 } from "../../schemas/serviceHooks.js";
 
-export const action = "EnabledServiceHook";
+export const action = "DeleteServiceHook";
 
 export const requestSchema = Schema.Struct({
-  Enabled: Schema.Boolean,
   Id: Schema.Array(Schema.String),
   ProjectId: Schema.Number,
-  TargetType: serviceHookTargetTypeSchema,
+  TargetType: Schema.optional(serviceHookTargetTypeSchema),
 });
 
 export const responseSchema = serviceHookOperationResultSchema;
 
-export type EnabledServiceHookRequest = Schema.Schema.Type<typeof requestSchema>;
+export type DeleteServiceHookRequest = Schema.Schema.Type<typeof requestSchema>;
 
-export type EnabledServiceHookResponse = Schema.Schema.Type<typeof responseSchema>;
+export type DeleteServiceHookResponse = Schema.Schema.Type<typeof responseSchema>;
 
-export const enabledServiceHookSpec = defineActionSpec({
+export const deleteServiceHookSpec = defineActionSpec({
   action,
   actionPlacement: "body",
   requestSchema,
   responseSchema,
-  summary: "Service Hook 事件开关",
+  summary: "Service Hook 删除",
 });
 
 /**
- * 批量开启或关闭指定的 Service Hook。
+ * 批量删除指定的 Service Hook。
  *
  * @param client 共享上下文客户端。
  * @param input 当前 action 的请求参数。
  * @param options 本次调用的局部覆盖配置。
- * @returns 解码后的开关结果响应。
+ * @returns 解码后的删除结果响应。
  */
-export async function enabledServiceHook(
+export async function deleteServiceHook(
   client: CodingClient,
-  input: EnabledServiceHookRequest,
+  input: DeleteServiceHookRequest,
   options?: InvokeOptions,
-): Promise<EnabledServiceHookResponse> {
-  return client.invoke(enabledServiceHookSpec, input, options);
+): Promise<DeleteServiceHookResponse> {
+  return client.invoke(deleteServiceHookSpec, input, options);
 }

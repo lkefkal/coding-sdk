@@ -7,41 +7,40 @@ import {
   serviceHookTargetTypeSchema,
 } from "../../schemas/serviceHooks.js";
 
-export const action = "EnabledServiceHook";
+export const action = "PingServiceHook";
 
 export const requestSchema = Schema.Struct({
-  Enabled: Schema.Boolean,
   Id: Schema.Array(Schema.String),
   ProjectId: Schema.Number,
-  TargetType: serviceHookTargetTypeSchema,
+  TargetType: Schema.optional(serviceHookTargetTypeSchema),
 });
 
 export const responseSchema = serviceHookOperationResultSchema;
 
-export type EnabledServiceHookRequest = Schema.Schema.Type<typeof requestSchema>;
+export type PingServiceHookRequest = Schema.Schema.Type<typeof requestSchema>;
 
-export type EnabledServiceHookResponse = Schema.Schema.Type<typeof responseSchema>;
+export type PingServiceHookResponse = Schema.Schema.Type<typeof responseSchema>;
 
-export const enabledServiceHookSpec = defineActionSpec({
+export const pingServiceHookSpec = defineActionSpec({
   action,
   actionPlacement: "body",
   requestSchema,
   responseSchema,
-  summary: "Service Hook 事件开关",
+  summary: "Service Hook 测试",
 });
 
 /**
- * 批量开启或关闭指定的 Service Hook。
+ * 触发指定 Service Hook 的测试发送。
  *
  * @param client 共享上下文客户端。
  * @param input 当前 action 的请求参数。
  * @param options 本次调用的局部覆盖配置。
- * @returns 解码后的开关结果响应。
+ * @returns 解码后的测试结果响应。
  */
-export async function enabledServiceHook(
+export async function pingServiceHook(
   client: CodingClient,
-  input: EnabledServiceHookRequest,
+  input: PingServiceHookRequest,
   options?: InvokeOptions,
-): Promise<EnabledServiceHookResponse> {
-  return client.invoke(enabledServiceHookSpec, input, options);
+): Promise<PingServiceHookResponse> {
+  return client.invoke(pingServiceHookSpec, input, options);
 }
