@@ -62,7 +62,8 @@
     "codegen:schema": "node ./scripts/codegen/generate-shared-schema-module.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "prepare": "npm run build"
   },
   "dependencies": {
     "effect": "^3.13.10"
