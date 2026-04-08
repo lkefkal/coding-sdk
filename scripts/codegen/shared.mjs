@@ -1,4 +1,4 @@
-import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -9,8 +9,6 @@ const dirname = path.dirname(filename);
 
 export const repoRoot = path.resolve(dirname, "..", "..");
 export const defaultDocumentPath = path.join(repoRoot, ".ref", "document.yaml");
-export const generatedApisDir = path.join(repoRoot, "src", "apis", "generated");
-export const generatedSchemasDir = path.join(repoRoot, "src", "schemas", "generated");
 const sourceClientTypesPath = path.join(repoRoot, "src", "client", "types.ts");
 const sourceActionSpecPath = path.join(repoRoot, "src", "core", "actionSpec.ts");
 const sourceUserSchemasPath = path.join(repoRoot, "src", "schemas", "user.ts");
@@ -87,8 +85,8 @@ function lowerFirst(value) {
   return value.length === 0 ? value : `${value[0].toLowerCase()}${value.slice(1)}`;
 }
 
-function normalizeCodegenTarget(target) {
-  return target === "src-generated" ? "src-generated" : "out";
+function toRepoDisplayPath(targetPath) {
+  return path.relative(repoRoot, targetPath).split(path.sep).join("/");
 }
 
 function toActionPlacement(actionDetail) {
@@ -290,28 +288,58 @@ function defaultGeneratedFileName(componentName) {
   return `${lowerFirst(componentName)}.generated.ts`;
 }
 
-export function resolveGeneratedActionOutputPath(entry) {
-  return path.join(generatedApisDir, `${entry.fileName}.ts`);
-}
-
-export function resolveGeneratedSchemaOutputPath(entry) {
-  return path.join(generatedSchemasDir, entry.generatedFileName);
+/**
+ * 解析 action 临时骨架文件的输出路径。
+ *
+ * @param entry 单个 action 的清单条目。
+ * @returns 临时骨架文件的绝对路径。
+ */
+export function resolveTempActionOutputPath(entry) {
+  return path.join(repoRoot, "scripts", "codegen", "out", `${entry.fileName}.generated.ts`);
 }
 
 /**
- * 根据目录内的生成文件列表渲染 barrel 入口。
+ * 解析共享 schema 临时骨架文件的输出路径。
  *
- * @param fileNames 目录中的文件名列表。
- * @returns 可直接写入 index.ts 的模块文本。
+ * @param entry 单个 component schema 的清单条目。
+ * @returns 临时骨架文件的绝对路径。
  */
-export function renderGeneratedIndexModule(fileNames) {
-  const exports = fileNames
-    .filter((fileName) => fileName.endsWith(".ts") && fileName !== "index.ts")
-    .map((fileName) => fileName.replace(/\.ts$/, ""))
-    .sort((left, right) => left.localeCompare(right))
-    .map((moduleName) => `export * from "./${moduleName}.js";`);
+export function resolveTempSchemaOutputPath(entry) {
+  return path.join(repoRoot, "scripts", "codegen", "out", entry.generatedFileName);
+}
 
-  return exports.length === 0 ? "export {};\n" : `${exports.join("\n")}\n`;
+/**
+ * 渲染 action 生成后的迁移提示。
+ *
+ * @param entry 单个 action 的清单条目。
+ * @param outputFilePath 临时骨架文件的输出路径。
+ * @returns 面向终端输出的迁移提示文本。
+ */
+export function renderActionMigrationGuide(entry, outputFilePath) {
+  return [
+    `迁移提示：${entry.action} 已生成到 ${toRepoDisplayPath(outputFilePath)}`,
+    `1. 将已验证的实现迁移到 src/apis/<domain>/${entry.fileName}.ts。`,
+    "2. 如果生成内容里包含共享结构，优先提取到 src/schemas/<domain>.ts。",
+    "3. 为正式函数补中文 JSDoc、补测试，并更新稳定导出。",
+    `4. 迁移完成后删除 ${toRepoDisplayPath(outputFilePath)}。`,
+  ].join("\n");
+}
+
+/**
+ * 渲染共享 schema 生成后的迁移提示。
+ *
+ * @param entry 单个 component schema 的清单条目。
+ * @param outputFilePath 临时骨架文件的输出路径。
+ * @returns 面向终端输出的迁移提示文本。
+ */
+export function renderSchemaMigrationGuide(entry, outputFilePath) {
+  return [
+    `迁移提示：${entry.componentName} 已生成到 ${toRepoDisplayPath(outputFilePath)}`,
+    "1. 将已验证的共享结构迁移到现有 src/schemas 文件，或新增稳定领域 schema 文件。",
+    "2. 优先复用已有共享 schema，避免把临时骨架直接作为正式实现。",
+    "3. 更新稳定导出并补齐中文 JSDoc 与测试。",
+    `4. 迁移完成后删除 ${toRepoDisplayPath(outputFilePath)}。`,
+  ].join("\n");
 }
 
 /**
@@ -651,37 +679,6 @@ export function resolveComponentEntry(document, componentName) {
 export async function writeTextFile(outputPath, content) {
   await mkdir(path.dirname(outputPath), { recursive: true });
   await writeFile(outputPath, content, "utf8");
-}
-
-/**
- * 同步 generated 目录下的 barrel 入口文件。
- *
- * @param dirPath generated 目录路径。
- * @returns 同步完成后的 Promise。
- */
-export async function syncGeneratedIndex(dirPath) {
-  await mkdir(dirPath, { recursive: true });
-  const entries = await readdir(dirPath, { withFileTypes: true });
-  const fileNames = entries
-    .filter((entry) => entry.isFile())
-    .map((entry) => entry.name);
-
-  await writeTextFile(
-    path.join(dirPath, "index.ts"),
-    renderGeneratedIndexModule(fileNames),
-  );
-}
-
-/**
- * 判断目标路径是否位于指定父目录内部。
- *
- * @param parentDirPath 父目录路径。
- * @param childPath 待判断的目标路径。
- * @returns 如果目标路径位于父目录内部则返回 true。
- */
-export function isPathInside(parentDirPath, childPath) {
-  const relative = path.relative(parentDirPath, childPath);
-  return relative !== "" && !relative.startsWith("..") && !path.isAbsolute(relative);
 }
 
 /**

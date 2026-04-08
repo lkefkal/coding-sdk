@@ -3,13 +3,11 @@ import path from "node:path";
 import {
   extractActionManifest,
   extractComponentManifest,
-  generatedApisDir,
-  isPathInside,
   loadOpenApiDocument,
+  renderActionMigrationGuide,
   renderActionModule,
-  resolveGeneratedActionOutputPath,
+  resolveTempActionOutputPath,
   resolveFromRepo,
-  syncGeneratedIndex,
   writeTextFile,
 } from "./shared.mjs";
 
@@ -43,6 +41,10 @@ async function main() {
     throw new TypeError("Missing required --action <ActionName> argument.");
   }
 
+  if (target != null && target !== "out") {
+    throw new RangeError("当前仅支持输出到临时目录 scripts/codegen/out；请不要再使用 src-generated。");
+  }
+
   const document = await loadOpenApiDocument(
     documentPath != null ? resolveFromRepo(documentPath) : undefined,
   );
@@ -57,22 +59,17 @@ async function main() {
   const resolvedOutputPath =
     outputPath != null
       ? resolveFromRepo(outputPath)
-      : target === "src-generated"
-        ? resolveGeneratedActionOutputPath(entry)
-        : path.join(resolveFromRepo("scripts/codegen/out"), `${entry.fileName}.generated.ts`);
+      : resolveTempActionOutputPath(entry);
 
   const content = renderActionModule(entry, resolvedOutputPath, componentManifest);
+  const migrationGuide = renderActionMigrationGuide(entry, resolvedOutputPath);
 
   if (outputPath != null) {
     await writeTextFile(resolvedOutputPath, `${content}\n`);
-    process.stdout.write(`wrote scaffold for ${actionName} to ${outputPath}\n`);
+    process.stdout.write(`已生成 ${actionName} 临时骨架：${outputPath}\n${migrationGuide}\n`);
   } else {
     await writeTextFile(resolvedOutputPath, `${content}\n`);
-    process.stdout.write(`wrote scaffold for ${actionName} to ${resolvedOutputPath}\n`);
-  }
-
-  if (isPathInside(generatedApisDir, resolvedOutputPath)) {
-    await syncGeneratedIndex(generatedApisDir);
+    process.stdout.write(`已生成 ${actionName} 临时骨架：${resolvedOutputPath}\n${migrationGuide}\n`);
   }
 }
 

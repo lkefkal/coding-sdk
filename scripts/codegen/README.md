@@ -25,10 +25,10 @@ npm run codegen:manifest -- --action DescribeIssueList
 npm run codegen:action -- --action DescribeCodingCurrentUser --output scripts/codegen/out/describeCodingCurrentUser.ts
 ```
 
-直接写入源码目录的 generated action：
+生成器默认只会写入临时目录，并在终端输出迁移步骤：
 
 ```bash
-npm run codegen:action -- --action DescribeServiceHooks --target src-generated
+npm run codegen:action -- --action DescribeServiceHooks
 ```
 
 生成单个共享 schema 模块骨架到文件：
@@ -37,10 +37,10 @@ npm run codegen:action -- --action DescribeServiceHooks --target src-generated
 npm run codegen:schema -- --component CurrentUser --output scripts/codegen/out/currentUser.generated.ts
 ```
 
-直接写入源码目录的 generated schema：
+生成共享 schema 临时骨架，并在终端输出迁移步骤：
 
 ```bash
-npm run codegen:schema -- --component ServiceHookPage --target src-generated
+npm run codegen:schema -- --component ServiceHookPage
 ```
 
 ## 当前范围
@@ -52,13 +52,15 @@ npm run codegen:schema -- --component ServiceHookPage --target src-generated
 - 当前已内置的复用映射包括 CurrentUser、IssueListData、IterationSimple、IssueCondition、IssueCustomField、IssueTypeDetail。
 - 对于未知但可解析的 component ref，`codegen:action` 现在也会在生成文件内递归展开为本地 helper schema。
 - 对于未知但可解析的 component ref，`codegen:schema` 会在生成文件内递归展开为本地 helper schema，而不是直接丢成 Schema.Unknown。
-- `--target src-generated` 会写入 `src/apis/generated` 或 `src/schemas/generated`，并自动维护对应的 `index.ts` barrel 文件。
+- 生成器默认只写入 `scripts/codegen/out`，用于临时验证与人工迁移。
+- 生成完成后，CLI 会输出迁移提示，要求把已验证的代码迁入正式目录并删除临时文件。
 - 当前不会自动解析复杂 $ref 并展开成完整领域 schema。
 - 遇到 object、$ref、复杂数组时，生成器会保守回退到 Schema.Unknown 或 Schema.Array(Schema.Unknown)。
 
 ## 设计约束
 
-- 生成结果遵循现有 action 文件模板，便于手工修正后直接纳入 src/apis。
+- 生成结果遵循现有 action 文件模板，便于验证后迁移到正式目录。
 - 共享 schema 生成默认写到 scripts/codegen/out，避免误覆盖现有 src/schemas 手写文件。
+- `src/**/generated` 不是长期维护目录；临时骨架验证完成后必须迁移并删除。
 - 生成器只负责“可编译的标准骨架”，不负责把所有组件 schema 都完整映射出来。
 - 后续如果要做全量 codegen，优先扩展 shared.mjs 里的 manifest 和字段映射逻辑，而不是重写 action 模板。

@@ -1,6 +1,18 @@
 import { Schema } from "effect";
 
 /**
+ * 表示 Service Hook 事件项的共享 schema。
+ */
+export const serviceHookEventSchema = Schema.Struct({
+  GroupLabel: Schema.String,
+  GroupName: Schema.String,
+  Label: Schema.String,
+  Name: Schema.String,
+});
+
+export type ServiceHookEvent = Schema.Schema.Type<typeof serviceHookEventSchema>;
+
+/**
  * 表示 Service Hook 关联用户的共享 schema。
  */
 export const serviceHookUserSchema = Schema.Struct({

@@ -3,13 +3,11 @@ import path from "node:path";
 import {
   defaultDocumentPath,
   extractComponentManifest,
-  generatedSchemasDir,
-  isPathInside,
   loadOpenApiDocument,
+  renderSchemaMigrationGuide,
   renderSharedSchemaModule,
-  resolveGeneratedSchemaOutputPath,
+  resolveTempSchemaOutputPath,
   resolveFromRepo,
-  syncGeneratedIndex,
   writeTextFile,
 } from "./shared.mjs";
 
@@ -43,6 +41,10 @@ async function main() {
     throw new TypeError("Missing required --component <ComponentName> argument.");
   }
 
+  if (target != null && target !== "out") {
+    throw new RangeError("当前仅支持输出到临时目录 scripts/codegen/out；请不要再使用 src-generated。");
+  }
+
   const document = await loadOpenApiDocument(
     documentPath != null ? resolveFromRepo(documentPath) : defaultDocumentPath,
   );
@@ -56,22 +58,17 @@ async function main() {
   const resolvedOutputPath =
     outputPath != null
       ? resolveFromRepo(outputPath)
-      : target === "src-generated"
-        ? resolveGeneratedSchemaOutputPath(entry)
-        : path.join(resolveFromRepo("scripts/codegen/out"), entry.generatedFileName);
+      : resolveTempSchemaOutputPath(entry);
 
   const content = renderSharedSchemaModule(entry, resolvedOutputPath, manifest);
+  const migrationGuide = renderSchemaMigrationGuide(entry, resolvedOutputPath);
 
   if (outputPath != null) {
     await writeTextFile(resolvedOutputPath, `${content}\n`);
-    process.stdout.write(`wrote shared schema scaffold for ${componentName} to ${outputPath}\n`);
+    process.stdout.write(`已生成 ${componentName} 临时 schema 骨架：${outputPath}\n${migrationGuide}\n`);
   } else {
     await writeTextFile(resolvedOutputPath, `${content}\n`);
-    process.stdout.write(`wrote shared schema scaffold for ${componentName} to ${resolvedOutputPath}\n`);
-  }
-
-  if (isPathInside(generatedSchemasDir, resolvedOutputPath)) {
-    await syncGeneratedIndex(generatedSchemasDir);
+    process.stdout.write(`已生成 ${componentName} 临时 schema 骨架：${resolvedOutputPath}\n${migrationGuide}\n`);
   }
 }
 

@@ -21,11 +21,13 @@ export type {
 } from "./issues.js";
 
 export {
+  serviceHookEventSchema,
   serviceHookPageSchema,
   serviceHookSchema,
   serviceHookUserSchema,
 } from "./serviceHooks.js";
 export type {
+  ServiceHookEvent,
   ServiceHook,
   ServiceHookPage,
   ServiceHookUser,

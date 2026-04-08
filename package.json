@@ -61,6 +61,10 @@
       "types": "./dist/apis/serviceHooks/index.d.ts",
       "import": "./dist/apis/serviceHooks/index.js"
     },
+    "./apis/serviceHooks/describeEvents": {
+      "types": "./dist/apis/serviceHooks/describeEvents.d.ts",
+      "import": "./dist/apis/serviceHooks/describeEvents.js"
+    },
     "./apis/serviceHooks/describeServiceHooks": {
       "types": "./dist/apis/serviceHooks/describeServiceHooks.d.ts",
       "import": "./dist/apis/serviceHooks/describeServiceHooks.js"

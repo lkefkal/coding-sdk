@@ -1,27 +1,44 @@
 import { describe, expect, it } from "vitest";
 
 describe("codegen 生成目录辅助函数", () => {
-  it("会为 generated 文件渲染稳定的 barrel 模块", async () => {
-    const { renderGeneratedIndexModule } = await import("../../scripts/codegen/shared.mjs");
+  it("会把 action 临时骨架输出到 scripts/codegen/out", async () => {
+    const { resolveTempActionOutputPath } = await import("../../scripts/codegen/shared.mjs");
 
-    const barrel = renderGeneratedIndexModule([
-      "serviceHookPage.generated.ts",
-      "index.ts",
-      "describeServiceHooks.ts",
-    ]);
+    const outputPath = resolveTempActionOutputPath({
+      action: "DescribeServiceHooks",
+      actionPlacement: "body",
+      fileName: "describeServiceHooks",
+      hasAuthorizationHeader: true,
+      method: "POST",
+      path: "/open-api",
+      requestFields: [],
+      responseFields: [],
+    });
 
-    expect(barrel).toBe(
-      [
-        'export * from "./describeServiceHooks.js";',
-        'export * from "./serviceHookPage.generated.js";',
-        "",
-      ].join("\n"),
+    expect(outputPath.replace(/\\/g, "/")).toContain(
+      "scripts/codegen/out/describeServiceHooks.generated.ts",
     );
   });
 
-  it("在没有生成文件时返回空模块", async () => {
-    const { renderGeneratedIndexModule } = await import("../../scripts/codegen/shared.mjs");
+  it("会输出明确的迁移提示", async () => {
+    const { renderActionMigrationGuide } = await import("../../scripts/codegen/shared.mjs");
 
-    expect(renderGeneratedIndexModule(["index.ts"])).toBe("export {};\n");
+    const guide = renderActionMigrationGuide(
+      {
+        action: "DescribeServiceHooks",
+        actionPlacement: "body",
+        fileName: "describeServiceHooks",
+        hasAuthorizationHeader: true,
+        method: "POST",
+        path: "/open-api",
+        requestFields: [],
+        responseFields: [],
+      },
+      "C:/repo/scripts/codegen/out/describeServiceHooks.generated.ts",
+    );
+
+    expect(guide).toContain("迁移提示：DescribeServiceHooks 已生成到");
+    expect(guide).toContain("src/apis/<domain>/describeServiceHooks.ts");
+    expect(guide).toContain("迁移完成后删除");
   });
 });
