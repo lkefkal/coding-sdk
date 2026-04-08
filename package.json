@@ -8,7 +8,8 @@
     "node": ">=18"
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md"
   ],
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -73,7 +74,7 @@
   },
   "scripts": {
     "clean": "rimraf dist",
-    "build": "tsup",
+    "build": "tsup --sourcemap",
     "build:watch": "tsup --watch",
     "codegen:manifest": "node ./scripts/codegen/extract-action-manifest.mjs",
     "codegen:action": "node ./scripts/codegen/generate-action-module.mjs",
@@ -82,7 +83,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "verify": "npm run typecheck && npm run test && npm run build && npm pack --dry-run",
-    "prepare": "npm run build"
+    "prepare": "tsup"
   },
   "dependencies": {
     "effect": "^3.13.10"
