@@ -11,6 +11,18 @@ export type {
 } from "./describeEvents.js";
 
 export {
+  action as describeServiceHookAction,
+  describeServiceHook,
+  describeServiceHookSpec,
+  requestSchema as describeServiceHookRequestSchema,
+  responseSchema as describeServiceHookResponseSchema,
+} from "./describeServiceHook.js";
+export type {
+  DescribeServiceHookRequest,
+  DescribeServiceHookResponse,
+} from "./describeServiceHook.js";
+
+export {
   action as describeServiceHooksAction,
   describeServiceHooks,
   describeServiceHooksSpec,
