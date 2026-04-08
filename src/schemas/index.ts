@@ -5,6 +5,7 @@ export {
   describeMergeRequestsDataSchema,
   gitDiffLineSchema,
   gitDiffSchema,
+  mergeRequestDiffNoteFormSchema,
   mergeRequestDiffFileSchema,
   mergeRequestDiffSchema,
   mergeRequestFileDiffItemSchema,
@@ -13,12 +14,15 @@ export {
   mergeRequestListItemSchema,
   mergeRequestLogSchema,
   mergeRequestMissionSchema,
+  mergeRequestNoteListSchema,
+  mergeRequestNoteSchema,
   mergeRequestUserSchema,
 } from "./mergeRequests.js";
 export type {
   DescribeMergeRequestsData,
   GitDiff,
   GitDiffLine,
+  MergeRequestDiffNoteForm,
   MergeRequestDiff,
   MergeRequestDiffFile,
   MergeRequestFileDiff,
@@ -27,6 +31,8 @@ export type {
   MergeRequestListItem,
   MergeRequestLog,
   MergeRequestMission,
+  MergeRequestNote,
+  MergeRequestNoteList,
   MergeRequestUser,
 } from "./mergeRequests.js";
 

@@ -147,9 +147,33 @@ export const mergeRequestFileDiffSchema = Schema.Struct({
   OldSha: Schema.String,
 });
 
+export const mergeRequestDiffNoteFormSchema = Schema.Struct({
+  CommitSha: Schema.String,
+  Index: Schema.Number,
+  Path: Schema.String,
+});
+
+export const mergeRequestNoteSchema = Schema.Struct({
+  Author: mergeRequestUserSchema,
+  CommitSha: Schema.NullOr(Schema.String),
+  Content: Schema.String,
+  CreatedAt: Schema.Number,
+  Id: Schema.Number,
+  Index: Schema.NullOr(Schema.Number),
+  MergeId: Schema.Number,
+  ParentId: Schema.Number,
+  Path: Schema.NullOr(Schema.String),
+  UpdatedAt: Schema.Number,
+});
+
+export const mergeRequestNoteListSchema = Schema.Struct({
+  Note: Schema.Array(mergeRequestNoteSchema),
+});
+
 export type DescribeMergeRequestsData = Schema.Schema.Type<typeof describeMergeRequestsDataSchema>;
 export type GitDiff = Schema.Schema.Type<typeof gitDiffSchema>;
 export type GitDiffLine = Schema.Schema.Type<typeof gitDiffLineSchema>;
+export type MergeRequestDiffNoteForm = Schema.Schema.Type<typeof mergeRequestDiffNoteFormSchema>;
 export type MergeRequestDiff = Schema.Schema.Type<typeof mergeRequestDiffSchema>;
 export type MergeRequestDiffFile = Schema.Schema.Type<typeof mergeRequestDiffFileSchema>;
 export type MergeRequestFileDiff = Schema.Schema.Type<typeof mergeRequestFileDiffSchema>;
@@ -158,4 +182,6 @@ export type MergeRequestInfo = Schema.Schema.Type<typeof mergeRequestInfoSchema>
 export type MergeRequestListItem = Schema.Schema.Type<typeof mergeRequestListItemSchema>;
 export type MergeRequestLog = Schema.Schema.Type<typeof mergeRequestLogSchema>;
 export type MergeRequestMission = Schema.Schema.Type<typeof mergeRequestMissionSchema>;
+export type MergeRequestNote = Schema.Schema.Type<typeof mergeRequestNoteSchema>;
+export type MergeRequestNoteList = Schema.Schema.Type<typeof mergeRequestNoteListSchema>;
 export type MergeRequestUser = Schema.Schema.Type<typeof mergeRequestUserSchema>;
