@@ -51,6 +51,14 @@ export const describeIssueListSpec = defineActionSpec({
   summary: "查询事项列表",
 });
 
+/**
+ * 查询事项列表，并返回经过 schema 解码后的结果。
+ *
+ * @param client 共享上下文客户端。
+ * @param input 当前 action 的请求参数。
+ * @param options 本次调用的局部覆盖配置。
+ * @returns 解码后的事项列表响应结果。
+ */
 export async function describeIssueList(
   client: CodingClient,
   input: DescribeIssueListRequest,

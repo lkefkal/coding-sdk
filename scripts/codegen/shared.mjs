@@ -1,4 +1,4 @@
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -9,6 +9,8 @@ const dirname = path.dirname(filename);
 
 export const repoRoot = path.resolve(dirname, "..", "..");
 export const defaultDocumentPath = path.join(repoRoot, ".ref", "document.yaml");
+export const generatedApisDir = path.join(repoRoot, "src", "apis", "generated");
+export const generatedSchemasDir = path.join(repoRoot, "src", "schemas", "generated");
 const sourceClientTypesPath = path.join(repoRoot, "src", "client", "types.ts");
 const sourceActionSpecPath = path.join(repoRoot, "src", "core", "actionSpec.ts");
 const sourceUserSchemasPath = path.join(repoRoot, "src", "schemas", "user.ts");
@@ -83,6 +85,10 @@ function ensureArray(value) {
 
 function lowerFirst(value) {
   return value.length === 0 ? value : `${value[0].toLowerCase()}${value.slice(1)}`;
+}
+
+function normalizeCodegenTarget(target) {
+  return target === "src-generated" ? "src-generated" : "out";
 }
 
 function toActionPlacement(actionDetail) {
@@ -200,11 +206,23 @@ function fallbackActionName(route) {
   return route.replace(/^\//, "").split("?")[0] || undefined;
 }
 
+/**
+ * 加载并解析 OpenAPI 文档。
+ *
+ * @param documentPath OpenAPI 文档路径。
+ * @returns 解析后的文档对象。
+ */
 export async function loadOpenApiDocument(documentPath = defaultDocumentPath) {
   const raw = await readFile(documentPath, "utf8");
   return YAML.parse(raw);
 }
 
+/**
+ * 从 OpenAPI 文档中提取 action 清单。
+ *
+ * @param document 已解析的 OpenAPI 文档。
+ * @returns 按 action 名排序后的清单。
+ */
 export function extractActionManifest(document) {
   const manifest = [];
 
@@ -272,6 +290,36 @@ function defaultGeneratedFileName(componentName) {
   return `${lowerFirst(componentName)}.generated.ts`;
 }
 
+export function resolveGeneratedActionOutputPath(entry) {
+  return path.join(generatedApisDir, `${entry.fileName}.ts`);
+}
+
+export function resolveGeneratedSchemaOutputPath(entry) {
+  return path.join(generatedSchemasDir, entry.generatedFileName);
+}
+
+/**
+ * 根据目录内的生成文件列表渲染 barrel 入口。
+ *
+ * @param fileNames 目录中的文件名列表。
+ * @returns 可直接写入 index.ts 的模块文本。
+ */
+export function renderGeneratedIndexModule(fileNames) {
+  const exports = fileNames
+    .filter((fileName) => fileName.endsWith(".ts") && fileName !== "index.ts")
+    .map((fileName) => fileName.replace(/\.ts$/, ""))
+    .sort((left, right) => left.localeCompare(right))
+    .map((moduleName) => `export * from "./${moduleName}.js";`);
+
+  return exports.length === 0 ? "export {};\n" : `${exports.join("\n")}\n`;
+}
+
+/**
+ * 从 OpenAPI 文档中提取共享 component schema 清单。
+ *
+ * @param document 已解析的 OpenAPI 文档。
+ * @returns 按 component 名排序后的 schema 清单。
+ */
 export function extractComponentManifest(document) {
   const schemas = ensureRecord(ensureRecord(document.components).schemas);
 
@@ -440,6 +488,14 @@ function renderStructWithContext(fields, context, mode) {
   return `Schema.Struct({\n${lines.join("\n")}\n})`;
 }
 
+/**
+ * 渲染单个 action 模块源码。
+ *
+ * @param entry 单个 action 的清单条目。
+ * @param outputFilePath 目标输出路径。
+ * @param componentManifest 可用的 component schema 清单。
+ * @returns 可直接写入文件的 TypeScript 模块文本。
+ */
 export function renderActionModule(
   entry,
   outputFilePath = path.join(repoRoot, "src", "apis", "generated", `${entry.fileName}.ts`),
@@ -496,6 +552,14 @@ export function renderActionModule(
     entry.summary != null ? `  summary: "${escapeText(entry.summary)}",` : undefined,
     "});",
     "",
+    "/**",
+    ` * 调用 ${escapeText(entry.action)} action，并返回经过 schema 解码后的结果。`,
+    " *",
+    " * @param client 共享上下文客户端。",
+    " * @param input 当前 action 的请求参数。",
+    " * @param options 本次调用的局部覆盖配置。",
+    " * @returns 解码后的 action 响应结果。",
+    " */",
     `export async function ${functionName}(`,
     "  client: CodingClient,",
     `  input: ${entry.action}Request,`,
@@ -509,6 +573,14 @@ export function renderActionModule(
     .join("\n");
 }
 
+/**
+ * 渲染单个共享 schema 模块源码。
+ *
+ * @param entry 单个 component schema 的清单条目。
+ * @param outputFilePath 目标输出路径。
+ * @param componentManifest 可用的 component schema 清单。
+ * @returns 可直接写入文件的 TypeScript 模块文本。
+ */
 export function renderSharedSchemaModule(
   entry,
   outputFilePath = path.join(repoRoot, "scripts", "codegen", "out", entry.generatedFileName),
@@ -534,6 +606,9 @@ export function renderSharedSchemaModule(
     ...extraImportLines,
     extraImportLines.length > 0 ? "" : undefined,
     ...localDependencyDeclarations,
+    "/**",
+    ` * 表示 ${escapeText(entry.typeName)} 的共享 schema。`,
+    " */",
     `export const ${entry.exportName} = ${schemaExpression};`,
     "",
     `export type ${entry.typeName} = Schema.Schema.Type<typeof ${entry.exportName}>;`,
@@ -543,6 +618,13 @@ export function renderSharedSchemaModule(
     .join("\n");
 }
 
+/**
+ * 解析单个 component 对应的清单条目。
+ *
+ * @param document 已解析的 OpenAPI 文档。
+ * @param componentName component 名称。
+ * @returns 匹配到的清单条目；如果不存在则返回 undefined。
+ */
 export function resolveComponentEntry(document, componentName) {
   const schema = componentSchemaOf(document, componentName);
 
@@ -559,11 +641,55 @@ export function resolveComponentEntry(document, componentName) {
   })[0];
 }
 
+/**
+ * 以 utf8 编码写入文本文件，并自动创建父目录。
+ *
+ * @param outputPath 输出文件路径。
+ * @param content 要写入的文本内容。
+ * @returns 写入完成后的 Promise。
+ */
 export async function writeTextFile(outputPath, content) {
   await mkdir(path.dirname(outputPath), { recursive: true });
   await writeFile(outputPath, content, "utf8");
 }
 
+/**
+ * 同步 generated 目录下的 barrel 入口文件。
+ *
+ * @param dirPath generated 目录路径。
+ * @returns 同步完成后的 Promise。
+ */
+export async function syncGeneratedIndex(dirPath) {
+  await mkdir(dirPath, { recursive: true });
+  const entries = await readdir(dirPath, { withFileTypes: true });
+  const fileNames = entries
+    .filter((entry) => entry.isFile())
+    .map((entry) => entry.name);
+
+  await writeTextFile(
+    path.join(dirPath, "index.ts"),
+    renderGeneratedIndexModule(fileNames),
+  );
+}
+
+/**
+ * 判断目标路径是否位于指定父目录内部。
+ *
+ * @param parentDirPath 父目录路径。
+ * @param childPath 待判断的目标路径。
+ * @returns 如果目标路径位于父目录内部则返回 true。
+ */
+export function isPathInside(parentDirPath, childPath) {
+  const relative = path.relative(parentDirPath, childPath);
+  return relative !== "" && !relative.startsWith("..") && !path.isAbsolute(relative);
+}
+
+/**
+ * 将仓库相对路径解析为绝对路径。
+ *
+ * @param inputPath 仓库相对路径或绝对路径。
+ * @returns 解析后的绝对路径。
+ */
 export function resolveFromRepo(inputPath) {
   return path.isAbsolute(inputPath) ? inputPath : path.join(repoRoot, inputPath);
 }

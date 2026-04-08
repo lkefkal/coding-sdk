@@ -40,8 +40,12 @@ export interface ComponentManifestEntry {
   readonly typeName: string;
 }
 
+export type CodegenTarget = "out" | "src-generated";
+
 export const repoRoot: string;
 export const defaultDocumentPath: string;
+export const generatedApisDir: string;
+export const generatedSchemasDir: string;
 
 export function loadOpenApiDocument(documentPath?: string): Promise<unknown>;
 export function extractActionManifest(document: unknown): ActionManifestEntry[];
@@ -60,5 +64,10 @@ export function resolveComponentEntry(
   document: unknown,
   componentName: string,
 ): ComponentManifestEntry | undefined;
+export function resolveGeneratedActionOutputPath(entry: ActionManifestEntry): string;
+export function resolveGeneratedSchemaOutputPath(entry: ComponentManifestEntry): string;
+export function renderGeneratedIndexModule(fileNames: readonly string[]): string;
+export function syncGeneratedIndex(dirPath: string): Promise<void>;
+export function isPathInside(parentDirPath: string, childPath: string): boolean;
 export function writeTextFile(outputPath: string, content: string): Promise<void>;
 export function resolveFromRepo(inputPath: string): string;

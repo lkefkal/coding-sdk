@@ -25,10 +25,22 @@ npm run codegen:manifest -- --action DescribeIssueList
 npm run codegen:action -- --action DescribeCodingCurrentUser --output scripts/codegen/out/describeCodingCurrentUser.ts
 ```
 
+直接写入源码目录的 generated action：
+
+```bash
+npm run codegen:action -- --action DescribeServiceHooks --target src-generated
+```
+
 生成单个共享 schema 模块骨架到文件：
 
 ```bash
 npm run codegen:schema -- --component CurrentUser --output scripts/codegen/out/currentUser.generated.ts
+```
+
+直接写入源码目录的 generated schema：
+
+```bash
+npm run codegen:schema -- --component ServiceHookPage --target src-generated
 ```
 
 ## 当前范围
@@ -40,6 +52,7 @@ npm run codegen:schema -- --component CurrentUser --output scripts/codegen/out/c
 - 当前已内置的复用映射包括 CurrentUser、IssueListData、IterationSimple、IssueCondition、IssueCustomField、IssueTypeDetail。
 - 对于未知但可解析的 component ref，`codegen:action` 现在也会在生成文件内递归展开为本地 helper schema。
 - 对于未知但可解析的 component ref，`codegen:schema` 会在生成文件内递归展开为本地 helper schema，而不是直接丢成 Schema.Unknown。
+- `--target src-generated` 会写入 `src/apis/generated` 或 `src/schemas/generated`，并自动维护对应的 `index.ts` barrel 文件。
 - 当前不会自动解析复杂 $ref 并展开成完整领域 schema。
 - 遇到 object、$ref、复杂数组时，生成器会保守回退到 Schema.Unknown 或 Schema.Array(Schema.Unknown)。
 

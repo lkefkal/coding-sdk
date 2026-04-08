@@ -35,6 +35,9 @@ export {
   issueListItemSchema,
   issueTypeSchema,
   issueTypeDetailSchema,
+  serviceHookPageSchema,
+  serviceHookSchema,
+  serviceHookUserSchema,
   sortDirectionSchema,
 } from "./schemas/index.js";
 export type {
@@ -45,5 +48,8 @@ export type {
   IssueListItem,
   IssueType,
   IssueTypeDetail,
+  ServiceHook,
+  ServiceHookPage,
+  ServiceHookUser,
   SortDirection,
 } from "./schemas/index.js";

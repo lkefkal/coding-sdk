@@ -18,6 +18,15 @@ export const DEFAULT_RETRY_OPTIONS: RetryOptions = Object.freeze({
   retryableTags: ["TimeoutError", "TransportError"],
 });
 
+/**
+ * 调用指定 action，并返回经过 schema 解码后的响应结果。
+ *
+ * @param config 已归一化的客户端配置。
+ * @param spec 当前 action 的规格定义。
+ * @param input 当前 action 的请求参数。
+ * @param options 本次调用的局部覆盖配置。
+ * @returns 解码后的 action 响应数据。
+ */
 export async function invokeAction<
   TRequestSchema extends AnySchema,
   TResponseSchema extends AnySchema,

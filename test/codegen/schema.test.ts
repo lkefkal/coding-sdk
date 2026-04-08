@@ -2,8 +2,8 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-describe("codegen shared schema module generation", () => {
-  it("renders known components with stable export names", async () => {
+describe("codegen 共享 schema 模块生成", () => {
+  it("会为已知组件渲染稳定的导出名称", async () => {
     const {
       extractComponentManifest,
       loadOpenApiDocument,
@@ -65,9 +65,10 @@ describe("codegen shared schema module generation", () => {
     expect(issueListModule).toContain(
       "export type IssueListItem = Schema.Schema.Type<typeof issueListItemSchema>;",
     );
+    expect(currentUserModule).toContain("* 表示 CurrentUser 的共享 schema。");
   });
 
-  it("recursively expands unknown component refs into local helper schemas", async () => {
+  it("会把未知组件 ref 递归展开为本地 helper schema", async () => {
     const {
       extractComponentManifest,
       loadOpenApiDocument,
@@ -105,5 +106,6 @@ describe("codegen shared schema module generation", () => {
     expect(moduleText).toContain(
       "export const serviceHookPageSchema = Schema.Struct({",
     );
+    expect(moduleText).toContain("* 表示 ServiceHookPage 的共享 schema。");
   });
 });

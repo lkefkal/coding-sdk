@@ -4,7 +4,7 @@ import { createCodingClient } from "../../src/client/createCodingClient.js";
 import { describeCodingCurrentUser } from "../../src/apis/user/describeCodingCurrentUser.js";
 
 describe("describeCodingCurrentUser", () => {
-  it("sends Action in both query and body", async () => {
+  it("会同时在 query 和 body 中发送 Action", async () => {
     const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
       const body = JSON.parse(String(init?.body));
       const url = new URL(String(input));

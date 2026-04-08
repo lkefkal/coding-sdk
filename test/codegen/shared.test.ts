@@ -2,8 +2,8 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-describe("codegen shared schema reuse", () => {
-  it("reuses known shared schemas for common component refs", async () => {
+describe("codegen 共享 schema 复用", () => {
+  it("会为常见 component ref 复用已有共享 schema", async () => {
     const {
       extractActionManifest,
       extractComponentManifest,
@@ -62,9 +62,10 @@ describe("codegen shared schema reuse", () => {
     expect(issueListModule).toContain(
       "IssueList: Schema.Array(issueListItemSchema)",
     );
+    expect(currentUserModule).toContain("* 调用 DescribeCodingCurrentUser action，并返回经过 schema 解码后的结果。");
   });
 
-  it("recursively expands unknown response refs into local helper schemas", async () => {
+  it("会把未知响应 ref 递归展开为本地 helper schema", async () => {
     const {
       extractActionManifest,
       extractComponentManifest,
@@ -97,5 +98,6 @@ describe("codegen shared schema reuse", () => {
     expect(moduleText).toContain("const serviceHookPageSchema = Schema.Struct({");
     expect(moduleText).toContain("CreatorByUser: serviceHookUserSchema");
     expect(moduleText).toContain("Data: serviceHookPageSchema");
+    expect(moduleText).toContain("* 调用 DescribeServiceHooks action，并返回经过 schema 解码后的结果。");
   });
 });

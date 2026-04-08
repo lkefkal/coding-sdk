@@ -19,3 +19,14 @@ export type {
   IssueTypeDetail,
   SortDirection,
 } from "./issues.js";
+
+export {
+  serviceHookPageSchema,
+  serviceHookSchema,
+  serviceHookUserSchema,
+} from "./serviceHooks.js";
+export type {
+  ServiceHook,
+  ServiceHookPage,
+  ServiceHookUser,
+} from "./serviceHooks.js";

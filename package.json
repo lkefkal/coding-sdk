@@ -37,6 +37,10 @@
       "types": "./dist/schemas/issues.d.ts",
       "import": "./dist/schemas/issues.js"
     },
+    "./schemas/serviceHooks": {
+      "types": "./dist/schemas/serviceHooks.d.ts",
+      "import": "./dist/schemas/serviceHooks.js"
+    },
     "./apis/user": {
       "types": "./dist/apis/user/index.d.ts",
       "import": "./dist/apis/user/index.js"
@@ -52,6 +56,14 @@
     "./apis/issues/describeIssueList": {
       "types": "./dist/apis/issues/describeIssueList.d.ts",
       "import": "./dist/apis/issues/describeIssueList.js"
+    },
+    "./apis/serviceHooks": {
+      "types": "./dist/apis/serviceHooks/index.d.ts",
+      "import": "./dist/apis/serviceHooks/index.js"
+    },
+    "./apis/serviceHooks/describeServiceHooks": {
+      "types": "./dist/apis/serviceHooks/describeServiceHooks.d.ts",
+      "import": "./dist/apis/serviceHooks/describeServiceHooks.js"
     },
     "./package.json": "./package.json"
   },
