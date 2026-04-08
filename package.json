@@ -37,6 +37,10 @@
       "types": "./dist/schemas/issues.d.ts",
       "import": "./dist/schemas/issues.js"
     },
+    "./schemas/mergeRequests": {
+      "types": "./dist/schemas/mergeRequests.d.ts",
+      "import": "./dist/schemas/mergeRequests.js"
+    },
     "./schemas/serviceHooks": {
       "types": "./dist/schemas/serviceHooks.d.ts",
       "import": "./dist/schemas/serviceHooks.js"
@@ -48,6 +52,10 @@
     "./apis/issues": {
       "types": "./dist/apis/issues/index.d.ts",
       "import": "./dist/apis/issues/index.js"
+    },
+    "./apis/mergeRequests": {
+      "types": "./dist/apis/mergeRequests/index.d.ts",
+      "import": "./dist/apis/mergeRequests/index.js"
     },
     "./apis/serviceHooks": {
       "types": "./dist/apis/serviceHooks/index.d.ts",

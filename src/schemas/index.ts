@@ -2,6 +2,21 @@ export { currentUserSchema } from "./user.js";
 export type { CurrentUser } from "./user.js";
 
 export {
+  describeMergeRequestsDataSchema,
+  mergeRequestInfoSchema,
+  mergeRequestListItemSchema,
+  mergeRequestMissionSchema,
+  mergeRequestUserSchema,
+} from "./mergeRequests.js";
+export type {
+  DescribeMergeRequestsData,
+  MergeRequestInfo,
+  MergeRequestListItem,
+  MergeRequestMission,
+  MergeRequestUser,
+} from "./mergeRequests.js";
+
+export {
   apiIssueLogIssueLogSchema,
   customFieldChangeLogSchema,
   issueDefectTypeSchema,
