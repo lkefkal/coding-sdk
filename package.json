@@ -25,6 +25,18 @@
       "types": "./dist/core/errors.d.ts",
       "import": "./dist/core/errors.js"
     },
+    "./schemas": {
+      "types": "./dist/schemas/index.d.ts",
+      "import": "./dist/schemas/index.js"
+    },
+    "./schemas/user": {
+      "types": "./dist/schemas/user.d.ts",
+      "import": "./dist/schemas/user.js"
+    },
+    "./schemas/issues": {
+      "types": "./dist/schemas/issues.d.ts",
+      "import": "./dist/schemas/issues.js"
+    },
     "./apis/user": {
       "types": "./dist/apis/user/index.d.ts",
       "import": "./dist/apis/user/index.js"
@@ -47,6 +59,7 @@
     "build": "rimraf dist && tsc -p tsconfig.build.json",
     "codegen:manifest": "node ./scripts/codegen/extract-action-manifest.mjs",
     "codegen:action": "node ./scripts/codegen/generate-action-module.mjs",
+    "codegen:schema": "node ./scripts/codegen/generate-shared-schema-module.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest"

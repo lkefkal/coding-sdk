@@ -11,6 +11,65 @@ export const repoRoot = path.resolve(dirname, "..", "..");
 export const defaultDocumentPath = path.join(repoRoot, ".ref", "document.yaml");
 const sourceClientTypesPath = path.join(repoRoot, "src", "client", "types.ts");
 const sourceActionSpecPath = path.join(repoRoot, "src", "core", "actionSpec.ts");
+const sourceUserSchemasPath = path.join(repoRoot, "src", "schemas", "user.ts");
+const sourceIssueSchemasPath = path.join(repoRoot, "src", "schemas", "issues.ts");
+
+const knownComponentSchemas = new Map([
+  [
+    "#/components/schemas/CurrentUser",
+    {
+      sourceFilePath: sourceUserSchemasPath,
+      exportName: "currentUserSchema",
+      importName: "currentUserSchema",
+      typeName: "CurrentUser",
+    },
+  ],
+  [
+    "#/components/schemas/IssueListData",
+    {
+      sourceFilePath: sourceIssueSchemasPath,
+      exportName: "issueListItemSchema",
+      importName: "issueListItemSchema",
+      typeName: "IssueListItem",
+    },
+  ],
+  [
+    "#/components/schemas/IterationSimple",
+    {
+      sourceFilePath: sourceIssueSchemasPath,
+      exportName: "issueIterationSchema",
+      importName: "issueIterationSchema",
+      typeName: "IssueIteration",
+    },
+  ],
+  [
+    "#/components/schemas/IssueCondition",
+    {
+      sourceFilePath: sourceIssueSchemasPath,
+      exportName: "issueConditionSchema",
+      importName: "issueConditionSchema",
+      typeName: "IssueCondition",
+    },
+  ],
+  [
+    "#/components/schemas/IssueCustomField",
+    {
+      sourceFilePath: sourceIssueSchemasPath,
+      exportName: "issueCustomFieldSchema",
+      importName: "issueCustomFieldSchema",
+      typeName: "IssueCustomField",
+    },
+  ],
+  [
+    "#/components/schemas/IssueTypeDetail",
+    {
+      sourceFilePath: sourceIssueSchemasPath,
+      exportName: "issueTypeDetailSchema",
+      importName: "issueTypeDetailSchema",
+      typeName: "IssueTypeDetail",
+    },
+  ],
+]);
 
 function ensureRecord(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value)
@@ -113,6 +172,16 @@ function requestSchemaOf(operation) {
   );
 }
 
+function componentRef(componentName) {
+  return `#/components/schemas/${componentName}`;
+}
+
+function componentSchemaOf(document, componentName) {
+  return ensureRecord(
+    ensureRecord(ensureRecord(document.components).schemas)[componentName],
+  );
+}
+
 function responseEnvelopeSchemaOf(operation) {
   const responseSchema = ensureRecord(
     operation.responses?.["200"]?.content?.["application/json"]?.schema,
@@ -195,7 +264,120 @@ export function extractActionManifest(document) {
   return manifest.sort((left, right) => left.action.localeCompare(right.action));
 }
 
-function schemaExpressionFromField(field) {
+function defaultSchemaExportName(componentName) {
+  return `${lowerFirst(componentName)}Schema`;
+}
+
+function defaultGeneratedFileName(componentName) {
+  return `${lowerFirst(componentName)}.generated.ts`;
+}
+
+export function extractComponentManifest(document) {
+  const schemas = ensureRecord(ensureRecord(document.components).schemas);
+
+  return Object.entries(schemas)
+    .map(([componentName, schemaValue]) => {
+      const schema = ensureRecord(schemaValue);
+      const known = knownComponentSchemas.get(componentRef(componentName));
+
+      return {
+        componentName,
+        description:
+          typeof schema.description === "string" ? schema.description : undefined,
+        exportName: known?.exportName ?? defaultSchemaExportName(componentName),
+        fields: collectFields(
+          schema.properties,
+          schema.required,
+          schema["x-tcapi-output-required"],
+        ),
+        generatedFileName: defaultGeneratedFileName(componentName),
+        ref: componentRef(componentName),
+        sourceFilePath: known?.sourceFilePath,
+        typeName: known?.typeName ?? componentName,
+      };
+    })
+    .sort((left, right) => left.componentName.localeCompare(right.componentName));
+}
+
+function escapeText(value) {
+  return String(value ?? "").replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+}
+
+function toModuleSpecifier(fromFilePath, targetFilePath) {
+  const relative = path.relative(path.dirname(fromFilePath), targetFilePath);
+  const normalized = relative.split(path.sep).join("/").replace(/\.ts$/, ".js");
+  return normalized.startsWith(".") ? normalized : `./${normalized}`;
+}
+
+function rememberImport(imports, outputFilePath, filePath, importName) {
+  const specifier = toModuleSpecifier(outputFilePath, filePath);
+  const importNames = imports.get(specifier) ?? new Set();
+  importNames.add(importName);
+  imports.set(specifier, importNames);
+}
+
+function resolveKnownSchemaRef(ref, imports, outputFilePath) {
+  const known = knownComponentSchemas.get(ref);
+
+  if (known == null) {
+    return undefined;
+  }
+
+  if (known.sourceFilePath !== outputFilePath) {
+    rememberImport(imports, outputFilePath, known.sourceFilePath, known.importName);
+  }
+
+  return known.importName;
+}
+
+function createSharedSchemaRenderContext(componentManifest, outputFilePath) {
+  return {
+    componentByRef: new Map(componentManifest.map((entry) => [entry.ref, entry])),
+    imports: new Map(),
+    localDeclarations: new Map(),
+    outputFilePath,
+    visitingRefs: new Set(),
+  };
+}
+
+function resolveSchemaRefForSharedModule(ref, context) {
+  const known = resolveKnownSchemaRef(ref, context.imports, context.outputFilePath);
+
+  if (known != null) {
+    return known;
+  }
+
+  const dependencyEntry = context.componentByRef.get(ref);
+
+  if (dependencyEntry == null) {
+    return undefined;
+  }
+
+  if (context.localDeclarations.has(ref)) {
+    return context.localDeclarations.get(ref).exportName;
+  }
+
+  if (context.visitingRefs.has(ref)) {
+    return undefined;
+  }
+
+  context.visitingRefs.add(ref);
+  const schemaExpression = renderStructWithContext(dependencyEntry.fields, context, "shared");
+  const declaration = [
+    `const ${dependencyEntry.exportName} = ${schemaExpression};`,
+    "",
+  ].join("\n");
+
+  context.localDeclarations.set(ref, {
+    declaration,
+    exportName: dependencyEntry.exportName,
+  });
+  context.visitingRefs.delete(ref);
+
+  return dependencyEntry.exportName;
+}
+
+function schemaExpressionFromField(field, context, mode) {
   const base = (() => {
     switch (field.kind.kind) {
       case "enum":
@@ -219,9 +401,22 @@ function schemaExpressionFromField(field) {
           default:
             return "Schema.Array(Schema.Unknown)";
         }
-      case "array-ref":
-        return "Schema.Array(Schema.Unknown)";
-      case "ref":
+      case "array-ref": {
+        const resolved =
+          mode === "shared"
+            ? resolveSchemaRefForSharedModule(field.kind.ref, context)
+            : resolveKnownSchemaRef(field.kind.ref, context.imports, context.outputFilePath);
+        return resolved != null
+          ? `Schema.Array(${resolved})`
+          : "Schema.Array(Schema.Unknown)";
+      }
+      case "ref": {
+        const resolved =
+          mode === "shared"
+            ? resolveSchemaRefForSharedModule(field.kind.ref, context)
+            : resolveKnownSchemaRef(field.kind.ref, context.imports, context.outputFilePath);
+        return resolved ?? "Schema.Unknown";
+      }
       case "object":
       case "unknown":
       default:
@@ -233,41 +428,56 @@ function schemaExpressionFromField(field) {
   return field.required ? nullable : `Schema.optional(${nullable})`;
 }
 
-function renderStruct(fields) {
+function renderStructWithContext(fields, context, mode) {
   if (fields.length === 0) {
     return "Schema.Struct({})";
   }
 
-  const lines = fields.map((field) => `  ${field.name}: ${schemaExpressionFromField(field)},`);
+  const lines = fields.map(
+    (field) =>
+      `  ${field.name}: ${schemaExpressionFromField(field, context, mode)},`,
+  );
   return `Schema.Struct({\n${lines.join("\n")}\n})`;
-}
-
-function escapeText(value) {
-  return String(value ?? "").replace(/\\/g, "\\\\").replace(/"/g, '\\"');
-}
-
-function toModuleSpecifier(fromFilePath, targetFilePath) {
-  const relative = path.relative(path.dirname(fromFilePath), targetFilePath);
-  const normalized = relative.split(path.sep).join("/").replace(/\.ts$/, ".js");
-  return normalized.startsWith(".") ? normalized : `./${normalized}`;
 }
 
 export function renderActionModule(entry, outputFilePath = path.join(repoRoot, "src", "apis", "generated", `${entry.fileName}.ts`)) {
   const functionName = lowerFirst(entry.action);
   const clientTypesImport = toModuleSpecifier(outputFilePath, sourceClientTypesPath);
   const actionSpecImport = toModuleSpecifier(outputFilePath, sourceActionSpecPath);
+  const context = {
+    imports: new Map(),
+    outputFilePath,
+  };
+  const requestSchemaExpression = renderStructWithContext(
+    entry.requestFields,
+    context,
+    "action",
+  );
+  const responseSchemaExpression = renderStructWithContext(
+    entry.responseFields,
+    context,
+    "action",
+  );
+  const extraImportLines = Array.from(context.imports.entries())
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([specifier, importNames]) => {
+      const names = Array.from(importNames).sort().join(", ");
+      return `import { ${names} } from "${specifier}";`;
+    });
 
   return [
     'import { Schema } from "effect";',
     "",
     `import type { CodingClient, InvokeOptions } from "${clientTypesImport}";`,
     `import { defineActionSpec } from "${actionSpecImport}";`,
+    ...extraImportLines,
+    extraImportLines.length > 0 ? "" : undefined,
     "",
     `export const action = "${escapeText(entry.action)}";`,
     "",
-    `export const requestSchema = ${renderStruct(entry.requestFields)};`,
+    `export const requestSchema = ${requestSchemaExpression};`,
     "",
-    `export const responseSchema = ${renderStruct(entry.responseFields)};`,
+    `export const responseSchema = ${responseSchemaExpression};`,
     "",
     `export type ${entry.action}Request = Schema.Schema.Type<typeof requestSchema>;`,
     "",
@@ -292,6 +502,56 @@ export function renderActionModule(entry, outputFilePath = path.join(repoRoot, "
   ]
     .filter((line) => line != null)
     .join("\n");
+}
+
+export function renderSharedSchemaModule(
+  entry,
+  outputFilePath = path.join(repoRoot, "scripts", "codegen", "out", entry.generatedFileName),
+  componentManifest = [entry],
+) {
+  const context = createSharedSchemaRenderContext(componentManifest, outputFilePath);
+  context.visitingRefs.add(entry.ref);
+  const schemaExpression = renderStructWithContext(entry.fields, context, "shared");
+  context.visitingRefs.delete(entry.ref);
+  const extraImportLines = Array.from(context.imports.entries())
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([specifier, importNames]) => {
+      const names = Array.from(importNames).sort().join(", ");
+      return `import { ${names} } from "${specifier}";`;
+    });
+  const localDependencyDeclarations = Array.from(context.localDeclarations.entries())
+    .filter(([ref]) => ref !== entry.ref)
+    .map(([, value]) => value.declaration);
+
+  return [
+    'import { Schema } from "effect";',
+    "",
+    ...extraImportLines,
+    extraImportLines.length > 0 ? "" : undefined,
+    ...localDependencyDeclarations,
+    `export const ${entry.exportName} = ${schemaExpression};`,
+    "",
+    `export type ${entry.typeName} = Schema.Schema.Type<typeof ${entry.exportName}>;`,
+    "",
+  ]
+    .filter((line) => line != null)
+    .join("\n");
+}
+
+export function resolveComponentEntry(document, componentName) {
+  const schema = componentSchemaOf(document, componentName);
+
+  if (Object.keys(schema).length === 0) {
+    return undefined;
+  }
+
+  return extractComponentManifest({
+    components: {
+      schemas: {
+        [componentName]: schema,
+      },
+    },
+  })[0];
 }
 
 export async function writeTextFile(outputPath, content) {

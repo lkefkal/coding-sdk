@@ -27,3 +27,23 @@ export {
   UnauthorizedError,
   isCodingSdkError,
 } from "./core/errors.js";
+export {
+  currentUserSchema,
+  issueConditionSchema,
+  issueCustomFieldSchema,
+  issueIterationSchema,
+  issueListItemSchema,
+  issueTypeSchema,
+  issueTypeDetailSchema,
+  sortDirectionSchema,
+} from "./schemas/index.js";
+export type {
+  CurrentUser,
+  IssueCondition,
+  IssueCustomField,
+  IssueIteration,
+  IssueListItem,
+  IssueType,
+  IssueTypeDetail,
+  SortDirection,
+} from "./schemas/index.js";
