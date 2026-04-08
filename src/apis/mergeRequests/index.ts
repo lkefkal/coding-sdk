@@ -1,4 +1,16 @@
 export {
+  action as createMergeRequestReviewerAction,
+  createMergeRequestReviewer,
+  createMergeRequestReviewerSpec,
+  requestSchema as createMergeRequestReviewerRequestSchema,
+  responseSchema as createMergeRequestReviewerResponseSchema,
+} from "./createMergeRequestReviewer.js";
+export type {
+  CreateMergeRequestReviewerRequest,
+  CreateMergeRequestReviewerResponse,
+} from "./createMergeRequestReviewer.js";
+
+export {
   action as describeDepotMergeRequestsAction,
   describeDepotMergeRequests,
   describeDepotMergeRequestsSpec,
@@ -59,6 +71,18 @@ export type {
 } from "./describeMergeRequest.js";
 
 export {
+  action as describeMergeRequestReviewersAction,
+  describeMergeRequestReviewers,
+  describeMergeRequestReviewersSpec,
+  requestSchema as describeMergeRequestReviewersRequestSchema,
+  responseSchema as describeMergeRequestReviewersResponseSchema,
+} from "./describeMergeRequestReviewers.js";
+export type {
+  DescribeMergeRequestReviewersRequest,
+  DescribeMergeRequestReviewersResponse,
+} from "./describeMergeRequestReviewers.js";
+
+export {
   action as describeSingeMergeRequestNotesAction,
   describeSingeMergeRequestNotes,
   describeSingeMergeRequestNotesSpec,
@@ -105,6 +129,18 @@ export type {
   DescribeMergeRequestLogRequest,
   DescribeMergeRequestLogResponse,
 } from "./describeMergeRequestLog.js";
+
+export {
+  action as deleteMergeRequestReviewerAction,
+  deleteMergeRequestReviewer,
+  deleteMergeRequestReviewerSpec,
+  requestSchema as deleteMergeRequestReviewerRequestSchema,
+  responseSchema as deleteMergeRequestReviewerResponseSchema,
+} from "./deleteMergeRequestReviewer.js";
+export type {
+  DeleteMergeRequestReviewerRequest,
+  DeleteMergeRequestReviewerResponse,
+} from "./deleteMergeRequestReviewer.js";
 
 export {
   action as deleteMergeRequestNoteAction,
