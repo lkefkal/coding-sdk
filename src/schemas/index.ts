@@ -1,6 +1,9 @@
 export { currentUserSchema } from "./user.js";
 export type { CurrentUser } from "./user.js";
 
+export { projectSchema, projectsDataSchema } from "./projects.js";
+export type { Project, ProjectsData } from "./projects.js";
+
 export {
   describeMergeRequestsDataSchema,
   gitDiffLineSchema,
