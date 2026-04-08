@@ -38,6 +38,7 @@ npm run codegen:schema -- --component CurrentUser --output scripts/codegen/out/c
 - 已生成：单个 component 的共享 schema 模块骨架。
 - 已支持：对已知组件 ref 复用 src/schemas 下的共享 schema，而不是一律回退成 Schema.Unknown。
 - 当前已内置的复用映射包括 CurrentUser、IssueListData、IterationSimple、IssueCondition、IssueCustomField、IssueTypeDetail。
+- 对于未知但可解析的 component ref，`codegen:action` 现在也会在生成文件内递归展开为本地 helper schema。
 - 对于未知但可解析的 component ref，`codegen:schema` 会在生成文件内递归展开为本地 helper schema，而不是直接丢成 Schema.Unknown。
 - 当前不会自动解析复杂 $ref 并展开成完整领域 schema。
 - 遇到 object、$ref、复杂数组时，生成器会保守回退到 Schema.Unknown 或 Schema.Array(Schema.Unknown)。

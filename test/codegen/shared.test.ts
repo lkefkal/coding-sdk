@@ -6,6 +6,7 @@ describe("codegen shared schema reuse", () => {
   it("reuses known shared schemas for common component refs", async () => {
     const {
       extractActionManifest,
+      extractComponentManifest,
       loadOpenApiDocument,
       renderActionModule,
       resolveFromRepo,
@@ -13,6 +14,7 @@ describe("codegen shared schema reuse", () => {
 
     const document = await loadOpenApiDocument(resolveFromRepo(".ref/document.yaml"));
     const manifest = extractActionManifest(document);
+    const componentManifest = extractComponentManifest(document);
     const currentUserAction = manifest.find(
       (entry) => entry.action === "DescribeCodingCurrentUser",
     );
@@ -36,8 +38,16 @@ describe("codegen shared schema reuse", () => {
       "describeIssueList.generated.ts",
     );
 
-    const currentUserModule = renderActionModule(currentUserAction, currentUserOutput);
-    const issueListModule = renderActionModule(issueListAction, issueListOutput);
+    const currentUserModule = renderActionModule(
+      currentUserAction,
+      currentUserOutput,
+      componentManifest,
+    );
+    const issueListModule = renderActionModule(
+      issueListAction,
+      issueListOutput,
+      componentManifest,
+    );
 
     expect(currentUserModule).toContain(
       'import { currentUserSchema } from "../../../src/schemas/user.js";',
@@ -52,5 +62,40 @@ describe("codegen shared schema reuse", () => {
     expect(issueListModule).toContain(
       "IssueList: Schema.Array(issueListItemSchema)",
     );
+  });
+
+  it("recursively expands unknown response refs into local helper schemas", async () => {
+    const {
+      extractActionManifest,
+      extractComponentManifest,
+      loadOpenApiDocument,
+      renderActionModule,
+      resolveFromRepo,
+    } = await import("../../scripts/codegen/shared.mjs");
+
+    const document = await loadOpenApiDocument(resolveFromRepo(".ref/document.yaml"));
+    const manifest = extractActionManifest(document);
+    const componentManifest = extractComponentManifest(document);
+    const actionEntry = manifest.find(
+      (entry) => entry.action === "DescribeServiceHooks",
+    );
+
+    expect(actionEntry).toBeDefined();
+
+    if (actionEntry == null) {
+      throw new Error("Expected DescribeServiceHooks to exist in the extracted manifest.");
+    }
+
+    const outputPath = path.join(
+      resolveFromRepo("scripts/codegen/out"),
+      "describeServiceHooks.generated.ts",
+    );
+    const moduleText = renderActionModule(actionEntry, outputPath, componentManifest);
+
+    expect(moduleText).toContain("const serviceHookUserSchema = Schema.Struct({");
+    expect(moduleText).toContain("const serviceHookSchema = Schema.Struct({");
+    expect(moduleText).toContain("const serviceHookPageSchema = Schema.Struct({");
+    expect(moduleText).toContain("CreatorByUser: serviceHookUserSchema");
+    expect(moduleText).toContain("Data: serviceHookPageSchema");
   });
 });

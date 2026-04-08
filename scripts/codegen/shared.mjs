@@ -340,7 +340,7 @@ function createSharedSchemaRenderContext(componentManifest, outputFilePath) {
   };
 }
 
-function resolveSchemaRefForSharedModule(ref, context) {
+function resolveSchemaRefForModule(ref, context) {
   const known = resolveKnownSchemaRef(ref, context.imports, context.outputFilePath);
 
   if (known != null) {
@@ -362,7 +362,7 @@ function resolveSchemaRefForSharedModule(ref, context) {
   }
 
   context.visitingRefs.add(ref);
-  const schemaExpression = renderStructWithContext(dependencyEntry.fields, context, "shared");
+  const schemaExpression = renderStructWithContext(dependencyEntry.fields, context, "module");
   const declaration = [
     `const ${dependencyEntry.exportName} = ${schemaExpression};`,
     "",
@@ -403,8 +403,8 @@ function schemaExpressionFromField(field, context, mode) {
         }
       case "array-ref": {
         const resolved =
-          mode === "shared"
-            ? resolveSchemaRefForSharedModule(field.kind.ref, context)
+          mode === "module"
+            ? resolveSchemaRefForModule(field.kind.ref, context)
             : resolveKnownSchemaRef(field.kind.ref, context.imports, context.outputFilePath);
         return resolved != null
           ? `Schema.Array(${resolved})`
@@ -412,8 +412,8 @@ function schemaExpressionFromField(field, context, mode) {
       }
       case "ref": {
         const resolved =
-          mode === "shared"
-            ? resolveSchemaRefForSharedModule(field.kind.ref, context)
+          mode === "module"
+            ? resolveSchemaRefForModule(field.kind.ref, context)
             : resolveKnownSchemaRef(field.kind.ref, context.imports, context.outputFilePath);
         return resolved ?? "Schema.Unknown";
       }
@@ -440,23 +440,24 @@ function renderStructWithContext(fields, context, mode) {
   return `Schema.Struct({\n${lines.join("\n")}\n})`;
 }
 
-export function renderActionModule(entry, outputFilePath = path.join(repoRoot, "src", "apis", "generated", `${entry.fileName}.ts`)) {
+export function renderActionModule(
+  entry,
+  outputFilePath = path.join(repoRoot, "src", "apis", "generated", `${entry.fileName}.ts`),
+  componentManifest = [],
+) {
   const functionName = lowerFirst(entry.action);
   const clientTypesImport = toModuleSpecifier(outputFilePath, sourceClientTypesPath);
   const actionSpecImport = toModuleSpecifier(outputFilePath, sourceActionSpecPath);
-  const context = {
-    imports: new Map(),
-    outputFilePath,
-  };
+  const context = createSharedSchemaRenderContext(componentManifest, outputFilePath);
   const requestSchemaExpression = renderStructWithContext(
     entry.requestFields,
     context,
-    "action",
+    "module",
   );
   const responseSchemaExpression = renderStructWithContext(
     entry.responseFields,
     context,
-    "action",
+    "module",
   );
   const extraImportLines = Array.from(context.imports.entries())
     .sort(([left], [right]) => left.localeCompare(right))
@@ -464,6 +465,9 @@ export function renderActionModule(entry, outputFilePath = path.join(repoRoot, "
       const names = Array.from(importNames).sort().join(", ");
       return `import { ${names} } from "${specifier}";`;
     });
+  const localDependencyDeclarations = Array.from(context.localDeclarations.values()).map(
+    (value) => value.declaration,
+  );
 
   return [
     'import { Schema } from "effect";',
@@ -472,6 +476,7 @@ export function renderActionModule(entry, outputFilePath = path.join(repoRoot, "
     `import { defineActionSpec } from "${actionSpecImport}";`,
     ...extraImportLines,
     extraImportLines.length > 0 ? "" : undefined,
+    ...localDependencyDeclarations,
     "",
     `export const action = "${escapeText(entry.action)}";`,
     "",
@@ -511,7 +516,7 @@ export function renderSharedSchemaModule(
 ) {
   const context = createSharedSchemaRenderContext(componentManifest, outputFilePath);
   context.visitingRefs.add(entry.ref);
-  const schemaExpression = renderStructWithContext(entry.fields, context, "shared");
+  const schemaExpression = renderStructWithContext(entry.fields, context, "module");
   context.visitingRefs.delete(entry.ref);
   const extraImportLines = Array.from(context.imports.entries())
     .sort(([left], [right]) => left.localeCompare(right))

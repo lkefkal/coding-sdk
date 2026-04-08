@@ -49,6 +49,7 @@ export function extractComponentManifest(document: unknown): ComponentManifestEn
 export function renderActionModule(
   entry: ActionManifestEntry,
   outputFilePath?: string,
+  componentManifest?: readonly ComponentManifestEntry[],
 ): string;
 export function renderSharedSchemaModule(
   entry: ComponentManifestEntry,

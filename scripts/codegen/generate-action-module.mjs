@@ -1,6 +1,14 @@
 import path from "node:path";
 
-import { extractActionManifest, loadOpenApiDocument, renderActionModule, repoRoot, resolveFromRepo, writeTextFile } from "./shared.mjs";
+import {
+  extractActionManifest,
+  extractComponentManifest,
+  loadOpenApiDocument,
+  renderActionModule,
+  repoRoot,
+  resolveFromRepo,
+  writeTextFile,
+} from "./shared.mjs";
 
 function readOption(argv, name) {
   const index = argv.indexOf(name);
@@ -20,6 +28,7 @@ const document = await loadOpenApiDocument(
   documentPath != null ? resolveFromRepo(documentPath) : undefined,
 );
 const manifest = extractActionManifest(document);
+const componentManifest = extractComponentManifest(document);
 const entry = manifest.find((item) => item.action === actionName);
 
 if (entry == null) {
@@ -31,7 +40,7 @@ const resolvedOutputPath =
     ? resolveFromRepo(outputPath)
     : path.join(repoRoot, "src", "apis", "generated", `${entry.fileName}.ts`);
 
-const content = renderActionModule(entry, resolvedOutputPath);
+const content = renderActionModule(entry, resolvedOutputPath, componentManifest);
 
 if (outputPath != null) {
   await writeTextFile(resolvedOutputPath, `${content}\n`);
