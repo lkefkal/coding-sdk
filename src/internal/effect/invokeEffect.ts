@@ -1,4 +1,4 @@
-import { Effect, Schema } from "effect";
+import { Cause, Effect, Exit, Option, Schema } from "effect";
 
 import type {
   InvokeOptions,
@@ -20,9 +20,15 @@ import {
   isCodingSdkError,
   toErrorMessage,
 } from "../../core/errors.js";
-import { unwrapCodingResponse } from "../../core/response.js";
+import { unwrapCodingResponseEffect } from "../../core/response.js";
 
 type JsonRecord = Record<string, unknown>;
+
+interface AbortState {
+  readonly signal: AbortSignal;
+  readonly didTimeout: () => boolean;
+  readonly cleanup: () => void;
+}
 
 export interface InvokeActionEffectArgs<
   TRequestSchema extends AnySchema,
@@ -43,21 +49,22 @@ function isRecord(value: unknown): value is JsonRecord {
  *
  * @param value 已经通过 schema 解码的请求值。
  * @param action 当前调用的 action 名称。
- * @returns 可直接用于构造请求体的对象记录。
- * @throws {DecodeError} 当请求 schema 没有解码为对象时抛出。
+ * @returns 包含对象记录或 DecodeError 的 Effect。
  */
-function toJsonRecord(value: unknown, action: string): JsonRecord {
+function toJsonRecord(
+  value: unknown,
+  action: string,
+): Effect.Effect<JsonRecord, DecodeError> {
   if (!isRecord(value)) {
-    throw new DecodeError(
-      `${action} 的请求 schema 必须解码为对象`,
-      {
+    return Effect.fail(
+      new DecodeError(`${action} 的请求 schema 必须解码为对象`, {
         action,
         phase: "request",
-      },
+      }),
     );
   }
 
-  return value;
+  return Effect.succeed(value);
 }
 
 /**
@@ -144,7 +151,10 @@ function buildBody(
  * @param timeoutMs 本次请求的超时时间。
  * @returns 包含实际请求 signal、超时标记与清理函数的状态对象。
  */
-function createAbortState(parentSignal: AbortSignal | undefined, timeoutMs: number) {
+function createAbortState(
+  parentSignal: AbortSignal | undefined,
+  timeoutMs: number,
+): AbortState {
   const controller = new AbortController();
   let timedOut = false;
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
@@ -215,17 +225,22 @@ function isCallerAbort(error: unknown, signal: AbortSignal | undefined): boolean
  *
  * @param action 当前调用的 action 名称。
  * @param signal 调用方传入的取消信号。
- * @throws {TransportError} 当调用方已经取消时抛出。
+ * @returns 当调用方未取消时返回成功，否则返回 TransportError。
  */
-function throwIfAborted(action: string, signal: AbortSignal | undefined): void {
+function throwIfAborted(
+  action: string,
+  signal: AbortSignal | undefined,
+): Effect.Effect<void, TransportError> {
   if (signal?.aborted !== true) {
-    return;
+    return Effect.succeed(undefined);
   }
 
-  throw new TransportError(`调用 ${action} 时请求已被取消`, {
-    action,
-    cause: signal.reason,
-  });
+  return Effect.fail(
+    new TransportError(`调用 ${action} 时请求已被取消`, {
+      action,
+      cause: signal.reason,
+    }),
+  );
 }
 
 /**
@@ -261,16 +276,21 @@ function shouldRetry(error: unknown, retry: RetryOptions, attempt: number): bool
  *
  * @param ms 等待的毫秒数。
  * @param signal 调用方传入的取消信号。
- * @returns 等待完成后的 Promise。
- * @throws {TransportError} 当等待期间被调用方取消时抛出。
+ * @param action 当前调用的 action 名称。
+ * @returns 等待完成后的 Effect。
  */
-function wait(ms: number, signal: AbortSignal | undefined): Promise<void> {
-  return new Promise((resolve, reject) => {
+function wait(
+  action: string,
+  ms: number,
+  signal: AbortSignal | undefined,
+): Effect.Effect<void, TransportError> {
+  return Effect.async<void, TransportError>((resume) => {
     if (signal?.aborted === true) {
-      reject(
-        new TransportError("请求在重试等待期间已被调用方取消", {
+      resume(
+        Effect.fail(new TransportError("请求在重试等待期间已被调用方取消", {
+          action,
           cause: signal.reason,
-        }),
+        })),
       );
       return;
     }
@@ -283,16 +303,17 @@ function wait(ms: number, signal: AbortSignal | undefined): Promise<void> {
       }
 
       signal?.removeEventListener("abort", handleAbort);
-      reject(
-        new TransportError("请求在重试等待期间已被调用方取消", {
+      resume(
+        Effect.fail(new TransportError("请求在重试等待期间已被调用方取消", {
+          action,
           cause: signal?.reason,
-        }),
+        })),
       );
     };
 
     timeoutId = setTimeout(() => {
       signal?.removeEventListener("abort", handleAbort);
-      resolve();
+      resume(Effect.succeed(undefined));
     }, ms);
 
     signal?.addEventListener("abort", handleAbort, { once: true });
@@ -333,6 +354,132 @@ function toCodingSdkError(action: string, error: unknown): Error {
 }
 
 /**
+ * 将请求执行阶段捕获到的异常收敛为稳定错误类型。
+ *
+ * @param action 当前调用的 action 名称。
+ * @param error 原始错误对象。
+ * @param didTimeout 当前失败是否由超时触发。
+ * @returns 规范化后的 SDK 错误。
+ */
+function toAttemptError(action: string, error: unknown, didTimeout: boolean): Error {
+  if (didTimeout) {
+    return new TimeoutError(`调用 ${action} 超时`, {
+      action,
+      cause: error,
+    });
+  }
+
+  if (isAbortError(error)) {
+    return new TransportError(`调用 ${action} 时请求已被取消`, {
+      action,
+      cause: error,
+    });
+  }
+
+  return toCodingSdkError(action, error);
+}
+
+/**
+ * 以 Effect 形式解析当前请求应使用的鉴权配置。
+ *
+ * @param config 已归一化的客户端配置。
+ * @param action 当前调用的 action 名称。
+ * @returns 包含鉴权配置或稳定错误类型的 Effect。
+ */
+function resolveAuthorizationEffect(
+  config: ResolvedCodingClientConfig,
+  action: string,
+): Effect.Effect<Awaited<ReturnType<typeof resolveAuthorization>>, Error> {
+  return Effect.tryPromise({
+    try: () => resolveAuthorization(config),
+    catch: (error) => toCodingSdkError(action, error),
+  });
+}
+
+/**
+ * 读取响应文本；如果响应体已经不可再读，则返回 undefined。
+ *
+ * @param response 当前 HTTP 响应。
+ * @returns 包含响应文本或 undefined 的 Effect。
+ */
+function readResponseText(response: Response): Effect.Effect<string | undefined> {
+  return Effect.catchAll(
+    Effect.tryPromise(() => response.text()),
+    () => Effect.succeed(undefined),
+  );
+}
+
+/**
+ * 以 Effect 形式解析 JSON 响应体。
+ *
+ * @param response 当前 HTTP 响应。
+ * @param action 当前调用的 action 名称。
+ * @returns 包含 JSON 负载或 DecodeError 的 Effect。
+ */
+function parseResponseJson(
+  response: Response,
+  action: string,
+): Effect.Effect<unknown, DecodeError> {
+  return Effect.tryPromise({
+    try: () => response.json(),
+    catch: (error) =>
+      new DecodeError(`${action} 的 JSON 响应解析失败：${toErrorMessage(error)}`, {
+        action,
+        cause: error,
+        phase: "json",
+      }),
+  });
+}
+
+/**
+ * 从 Effect 失败原因中尽量还原原始 SDK 错误。
+ *
+ * @param action 当前调用的 action 名称。
+ * @param cause Effect 失败原因。
+ * @returns 优先返回失败通道中的 typed error，兜底时再压缩 cause。
+ */
+function toRuntimeError(action: string, cause: Cause.Cause<Error>): Error {
+  const failure = Cause.failureOption(cause);
+
+  if (Option.isSome(failure)) {
+    return failure.value;
+  }
+
+  return toCodingSdkError(action, Cause.squash(cause));
+}
+
+/**
+ * 以 Effect 形式发起 HTTP 请求。
+ *
+ * @param config 已归一化的客户端配置。
+ * @param spec 当前 action 规格。
+ * @param url 最终请求 URL。
+ * @param headers 最终请求头。
+ * @param body 最终请求体。
+ * @param abortState 当前请求的取消与超时状态。
+ * @returns 包含 HTTP 响应或稳定错误类型的 Effect。
+ */
+function fetchResponseEffect(
+  config: ResolvedCodingClientConfig,
+  spec: ActionSpec<AnySchema, AnySchema>,
+  url: URL,
+  headers: Headers,
+  body: JsonRecord,
+  abortState: AbortState,
+): Effect.Effect<Response, Error> {
+  return Effect.tryPromise({
+    try: () =>
+      config.fetch(url, {
+        method: spec.method ?? "POST",
+        headers,
+        body: JSON.stringify(body),
+        signal: abortState.signal,
+      }),
+    catch: (error) => toAttemptError(spec.action, error, abortState.didTimeout()),
+  });
+}
+
+/**
  * 使用 effect schema 对输入值执行运行时解码。
  *
  * @param schema 当前阶段使用的 schema。
@@ -340,43 +487,37 @@ function toCodingSdkError(action: string, error: unknown): Error {
  * @param action 当前调用的 action 名称。
  * @param phase 当前解码阶段。
  * @param requestId 可选的请求 ID，用于补充错误上下文。
- * @returns 解码后的强类型结果。
- * @throws {DecodeError} 当值与 schema 不匹配时抛出。
+ * @returns 包含解码结果或 DecodeError 的 Effect。
  */
-async function decodeWithSchema<TSchema extends AnySchema>(
+function decodeWithSchema<TSchema extends AnySchema>(
   schema: TSchema,
   value: unknown,
   action: string,
   phase: "request" | "response",
   requestId?: string,
-): Promise<SchemaType<TSchema>> {
-  try {
-    return await Schema.decodeUnknownPromise(schema)(value);
-  } catch (error) {
-    throw new DecodeError(
-      `${action} 的${phase === "request" ? "请求" : "响应"}负载解码失败：${toErrorMessage(error)}`,
-      {
-        action,
-        cause: error,
-        phase,
-        requestId,
-      },
-    );
-  }
+): Effect.Effect<SchemaType<TSchema>, DecodeError> {
+  return Effect.tryPromise({
+    try: () => Schema.decodeUnknownPromise(schema)(value),
+    catch: (error) =>
+      new DecodeError(
+        `${action} 的${phase === "request" ? "请求" : "响应"}负载解码失败：${toErrorMessage(error)}`,
+        {
+          action,
+          cause: error,
+          phase,
+          requestId,
+        },
+      ),
+  });
 }
 
 /**
  * 执行一次实际的 HTTP 请求尝试，并完成鉴权、解包与解码。
  *
  * @param args 单次调用所需的完整参数。
- * @returns 解码后的 action 响应结果。
- * @throws {DecodeError} 当请求或响应结构不匹配 schema 时抛出。
- * @throws {UnauthorizedError} 当 HTTP 或业务层返回鉴权失败时抛出。
- * @throws {HttpError} 当响应状态码不是成功状态时抛出。
- * @throws {TimeoutError} 当请求超时时抛出。
- * @throws {TransportError} 当请求被取消或发生底层传输异常时抛出。
+ * @returns 包含解码结果或稳定错误类型的 Effect。
  */
-async function executeAttempt<
+function executeAttempt<
   TRequestSchema extends AnySchema,
   TResponseSchema extends AnySchema,
 >({
@@ -384,173 +525,130 @@ async function executeAttempt<
   spec,
   input,
   options,
-}: InvokeActionEffectArgs<TRequestSchema, TResponseSchema>): Promise<
-  SchemaType<TResponseSchema>
+}: InvokeActionEffectArgs<TRequestSchema, TResponseSchema>): Effect.Effect<
+  SchemaType<TResponseSchema>,
+  Error
 > {
-  const validatedInput = await decodeWithSchema(
-    spec.requestSchema,
-    input,
-    spec.action,
-    "request",
-  );
-  const requestBody = toJsonRecord(validatedInput, spec.action);
   const placement = options?.actionPlacementOverride ?? spec.actionPlacement ?? "body";
-  const authorization = await resolveAuthorization(config);
-  const headers = mergeHeaders(config.headers, options?.headers, authorization);
-  const url = buildUrl(config.baseUrl, spec, placement, options?.query);
-  const body = buildBody(requestBody, spec, placement);
   const timeoutMs = options?.timeoutMs ?? config.timeoutMs;
-  const abortState = createAbortState(options?.signal, timeoutMs);
 
-  config.logger?.debug?.("coding-sdk 请求开始", {
-    action: spec.action,
-    method: spec.method ?? "POST",
-    url: url.toString(),
-  });
+  return Effect.acquireUseRelease(
+    Effect.sync(() => createAbortState(options?.signal, timeoutMs)),
+    (abortState) =>
+      Effect.gen(function* () {
+        const validatedInput = yield* decodeWithSchema(
+          spec.requestSchema,
+          input,
+          spec.action,
+          "request",
+        );
+        const requestBody = yield* toJsonRecord(validatedInput, spec.action);
+        const authorization = yield* resolveAuthorizationEffect(config, spec.action);
+        const headers = mergeHeaders(config.headers, options?.headers, authorization);
+        const url = buildUrl(config.baseUrl, spec, placement, options?.query);
+        const body = buildBody(requestBody, spec, placement);
 
-  try {
-    const response = await config.fetch(url, {
-      method: spec.method ?? "POST",
-      headers,
-      body: JSON.stringify(body),
-      signal: abortState.signal,
-    });
-
-    if (response.status === 401 || response.status === 403) {
-      const responseBody = await response.text().catch(() => undefined);
-
-      throw new UnauthorizedError(
-        `调用 ${spec.action} 时鉴权失败`,
-        {
+        config.logger?.debug?.("coding-sdk 请求开始", {
           action: spec.action,
-          statusCode: response.status,
-        },
-      );
-    }
+          method: spec.method ?? "POST",
+          url: url.toString(),
+        });
 
-    if (!response.ok) {
-      const responseBody = await response.text().catch(() => undefined);
+        const response = yield* fetchResponseEffect(
+          config,
+          spec,
+          url,
+          headers,
+          body,
+          abortState,
+        );
 
-      throw new HttpError(
-        `HTTP ${response.status} while invoking ${spec.action}`,
-        {
-          action: spec.action,
-          responseBody,
-          statusCode: response.status,
-          statusText: response.statusText,
-        },
-      );
-    }
+        if (response.status === 401 || response.status === 403) {
+          const responseBody = yield* readResponseText(response);
 
-    let payload: unknown;
+          yield* Effect.fail(
+            new UnauthorizedError(`调用 ${spec.action} 时鉴权失败`, {
+              action: spec.action,
+              code: undefined,
+              requestId: undefined,
+              statusCode: response.status,
+              cause: responseBody,
+            }),
+          );
+        }
 
-    try {
-      payload = await response.json();
-    } catch (error) {
-      throw new DecodeError(
-        `${spec.action} 的 JSON 响应解析失败：${toErrorMessage(error)}`,
-        {
-          action: spec.action,
-          cause: error,
-          phase: "json",
-        },
-      );
-    }
+        if (!response.ok) {
+          const responseBody = yield* readResponseText(response);
 
-    const unwrapped = unwrapCodingResponse(payload, spec.action);
+          yield* Effect.fail(
+            new HttpError(`HTTP ${response.status} while invoking ${spec.action}`, {
+              action: spec.action,
+              responseBody,
+              statusCode: response.status,
+              statusText: response.statusText,
+            }),
+          );
+        }
 
-    return await decodeWithSchema(
-      spec.responseSchema,
-      unwrapped.payload,
-      spec.action,
-      "response",
-      unwrapped.requestId,
-    );
-  } catch (error) {
-    if (abortState.didTimeout()) {
-      throw new TimeoutError(`调用 ${spec.action} 超时`, {
-        action: spec.action,
-        cause: error,
-      });
-    }
+        const payload = yield* parseResponseJson(response, spec.action);
 
-    if (isAbortError(error)) {
-      throw new TransportError(`调用 ${spec.action} 时请求已被取消`, {
-        action: spec.action,
-        cause: error,
-      });
-    }
+        const unwrapped = yield* unwrapCodingResponseEffect(payload, spec.action);
 
-    if (!isCodingSdkError(error)) {
-      throw new TransportError(
-        `调用 ${spec.action} 时发生未预期异常：${toErrorMessage(error)}`,
-        {
-          action: spec.action,
-          cause: error,
-        },
-      );
-    }
-
-    throw error;
-  } finally {
-    abortState.cleanup();
-  }
+        return yield* decodeWithSchema(
+          spec.responseSchema,
+          unwrapped.payload,
+          spec.action,
+          "response",
+          unwrapped.requestId,
+        );
+      }),
+    (abortState) => Effect.sync(() => abortState.cleanup()),
+  );
 }
 
 /**
  * 按照重试配置执行 action 调用，直到成功或达到终止条件。
  *
  * @param args 单次调用所需的完整参数。
- * @returns 解码后的 action 响应结果。
- * @throws {Error} 当达到最大重试次数或遇到不可重试错误时抛出。
+ * @returns 包含解码结果或稳定错误类型的 Effect。
  */
-async function invokeWithRetry<
+function invokeWithRetry<
   TRequestSchema extends AnySchema,
   TResponseSchema extends AnySchema,
 >(
   args: InvokeActionEffectArgs<TRequestSchema, TResponseSchema>,
-): Promise<SchemaType<TResponseSchema>> {
+): Effect.Effect<SchemaType<TResponseSchema>, Error> {
   const retry = mergeRetryOptions(args.config.retry, args.options?.retry);
   const callerSignal = args.options?.signal;
 
-  for (let attempt = 1; ; attempt += 1) {
-    throwIfAborted(args.spec.action, callerSignal);
-
-    try {
-      return await executeAttempt(args);
-    } catch (error) {
-      if (isCallerAbort(error, callerSignal)) {
-        throw error;
-      }
-
-      if (!shouldRetry(error, retry, attempt)) {
-        throw error;
-      }
-
-      const delayMs = backoffDelayMs(retry, attempt);
-
-      args.config.logger?.warn?.("coding-sdk 请求重试", {
-        action: args.spec.action,
-        attempt,
-        delayMs,
-        error: toErrorMessage(error),
-      });
-
-      await wait(delayMs, callerSignal).catch((waitError) => {
-        if (waitError instanceof TransportError) {
-          throw new TransportError(
-            `调用 ${args.spec.action} 时请求已被取消`,
-            {
-              action: args.spec.action,
-              cause: waitError.cause,
-            },
-          );
+  const loop = (attempt: number): Effect.Effect<SchemaType<TResponseSchema>, Error> =>
+    Effect.flatMap(throwIfAborted(args.spec.action, callerSignal), () =>
+      Effect.catchAll(executeAttempt(args), (error) => {
+        if (isCallerAbort(error, callerSignal)) {
+          return Effect.fail(error);
         }
 
-        throw waitError;
-      });
-    }
-  }
+        if (!shouldRetry(error, retry, attempt)) {
+          return Effect.fail(error);
+        }
+
+        const delayMs = backoffDelayMs(retry, attempt);
+
+        args.config.logger?.warn?.("coding-sdk 请求重试", {
+          action: args.spec.action,
+          attempt,
+          delayMs,
+          error: toErrorMessage(error),
+        });
+
+        return Effect.flatMap(
+          wait(args.spec.action, delayMs, callerSignal),
+          () => loop(attempt + 1),
+        );
+      }),
+    );
+
+  return loop(1);
 }
 
 /**
@@ -565,7 +663,13 @@ export async function invokeActionRuntime<
 >(
   args: InvokeActionEffectArgs<TRequestSchema, TResponseSchema>,
 ): Promise<SchemaType<TResponseSchema>> {
-  return invokeWithRetry(args);
+  const exit = await Effect.runPromiseExit(invokeActionEffect(args));
+
+  if (Exit.isSuccess(exit)) {
+    return exit.value;
+  }
+
+  throw toRuntimeError(args.spec.action, exit.cause);
 }
 
 /**
@@ -580,8 +684,8 @@ export function invokeActionEffect<
 >(
   args: InvokeActionEffectArgs<TRequestSchema, TResponseSchema>,
 ): Effect.Effect<SchemaType<TResponseSchema>, Error> {
-  return Effect.tryPromise({
-    try: () => invokeActionRuntime(args),
-    catch: (error) => toCodingSdkError(args.spec.action, error),
-  });
+  return Effect.mapError(
+    invokeWithRetry(args),
+    (error) => toCodingSdkError(args.spec.action, error),
+  );
 }

@@ -1,3 +1,5 @@
+import { Effect } from "effect";
+
 import {
   CodingApiError,
   DecodeError,
@@ -9,43 +11,44 @@ export interface UnwrappedCodingResponse {
   readonly payload: Record<string, unknown>;
 }
 
+/**
+ * 判断未知值是否为普通对象记录。
+ *
+ * @param value 待判断的未知值。
+ * @returns 如果值是对象记录，则返回 true。
+ */
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 /**
- * 解包 CODING Open API 的统一 Response 包装层。
+ * 以 Effect 形式解包 CODING Open API 的统一 Response 包装层。
  *
  * @param value 原始响应体。
  * @param action 当前调用的 action 名称。
- * @returns 解包后的业务负载与请求 ID。
- * @throws {DecodeError} 当响应结构不符合统一包装约定时抛出。
- * @throws {UnauthorizedError} 当响应中包含鉴权相关业务错误时抛出。
- * @throws {CodingApiError} 当响应中包含显式业务错误时抛出。
+ * @returns 包含解包结果或稳定响应错误类型的 Effect。
  */
-export function unwrapCodingResponse(
+export function unwrapCodingResponseEffect(
   value: unknown,
   action: string,
-): UnwrappedCodingResponse {
+): Effect.Effect<UnwrappedCodingResponse, CodingApiError | DecodeError | UnauthorizedError> {
   if (!isRecord(value)) {
-    throw new DecodeError(
-      `${action} 的 CODING 响应必须是对象`,
-      {
+    return Effect.fail(
+      new DecodeError(`${action} 的 CODING 响应必须是对象`, {
         action,
         phase: "envelope",
-      },
+      }),
     );
   }
 
   const response = value.Response;
 
   if (!isRecord(response)) {
-    throw new DecodeError(
-      `${action} 的 CODING 响应缺少 Response 包装层`,
-      {
+    return Effect.fail(
+      new DecodeError(`${action} 的 CODING 响应缺少 Response 包装层`, {
         action,
         phase: "envelope",
-      },
+      }),
     );
   }
 
@@ -63,22 +66,26 @@ export function unwrapCodingResponse(
       error.Code === "AuthFailure" ||
       error.Code === "UnauthorizedOperation"
     ) {
-      throw new UnauthorizedError(message, {
+      return Effect.fail(
+        new UnauthorizedError(message, {
+          action,
+          code: error.Code,
+          requestId,
+        }),
+      );
+    }
+
+    return Effect.fail(
+      new CodingApiError(message, {
         action,
         code: error.Code,
         requestId,
-      });
-    }
-
-    throw new CodingApiError(message, {
-      action,
-      code: error.Code,
-      requestId,
-    });
+      }),
+    );
   }
 
-  return {
+  return Effect.succeed({
     requestId,
     payload: response,
-  };
+  });
 }
