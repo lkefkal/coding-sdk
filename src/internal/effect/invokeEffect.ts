@@ -150,6 +150,39 @@ function isAbortError(error: unknown): boolean {
   return error instanceof Error && error.name === "AbortError";
 }
 
+/**
+ * 判断当前失败是否源自调用方主动取消。
+ *
+ * @param error 当前捕获到的错误。
+ * @param signal 调用方传入的取消信号。
+ * @returns 如果是调用方主动取消，则返回 true。
+ */
+function isCallerAbort(error: unknown, signal: AbortSignal | undefined): boolean {
+  return (
+    signal?.aborted === true &&
+    error instanceof TransportError &&
+    isAbortError(error.cause)
+  );
+}
+
+/**
+ * 在重试边界上优先响应调用方取消，避免继续发送额外请求。
+ *
+ * @param action 当前调用的 action 名称。
+ * @param signal 调用方传入的取消信号。
+ * @throws {TransportError} 当调用方已经取消时抛出。
+ */
+function throwIfAborted(action: string, signal: AbortSignal | undefined): void {
+  if (signal?.aborted !== true) {
+    return;
+  }
+
+  throw new TransportError(`Request aborted while invoking ${action}`, {
+    action,
+    cause: signal.reason,
+  });
+}
+
 function shouldRetry(error: unknown, retry: RetryOptions, attempt: number): boolean {
   if (attempt >= retry.maxAttempts) {
     return false;
@@ -170,9 +203,46 @@ function shouldRetry(error: unknown, retry: RetryOptions, attempt: number): bool
   return false;
 }
 
-function wait(ms: number): Promise<void> {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
+/**
+ * 等待下一次重试，并在等待期间响应调用方取消。
+ *
+ * @param ms 等待的毫秒数。
+ * @param signal 调用方传入的取消信号。
+ * @returns 等待完成后的 Promise。
+ * @throws {TransportError} 当等待期间被调用方取消时抛出。
+ */
+function wait(ms: number, signal: AbortSignal | undefined): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted === true) {
+      reject(
+        new TransportError("请求在重试等待期间已被调用方取消", {
+          cause: signal.reason,
+        }),
+      );
+      return;
+    }
+
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+    const handleAbort = () => {
+      if (timeoutId != null) {
+        clearTimeout(timeoutId);
+      }
+
+      signal?.removeEventListener("abort", handleAbort);
+      reject(
+        new TransportError("请求在重试等待期间已被调用方取消", {
+          cause: signal?.reason,
+        }),
+      );
+    };
+
+    timeoutId = setTimeout(() => {
+      signal?.removeEventListener("abort", handleAbort);
+      resolve();
+    }, ms);
+
+    signal?.addEventListener("abort", handleAbort, { once: true });
   });
 }
 
@@ -322,6 +392,16 @@ async function executeAttempt<
       });
     }
 
+    if (!isCodingSdkError(error)) {
+      throw new TransportError(
+        `Unexpected failure while invoking ${spec.action}: ${toErrorMessage(error)}`,
+        {
+          action: spec.action,
+          cause: error,
+        },
+      );
+    }
+
     throw error;
   } finally {
     abortState.cleanup();
@@ -335,11 +415,18 @@ async function invokeWithRetry<
   args: InvokeActionEffectArgs<TRequestSchema, TResponseSchema>,
 ): Promise<SchemaType<TResponseSchema>> {
   const retry = mergeRetryOptions(args.config.retry, args.options?.retry);
+  const callerSignal = args.options?.signal;
 
   for (let attempt = 1; ; attempt += 1) {
+    throwIfAborted(args.spec.action, callerSignal);
+
     try {
       return await executeAttempt(args);
     } catch (error) {
+      if (isCallerAbort(error, callerSignal)) {
+        throw error;
+      }
+
       if (!shouldRetry(error, retry, attempt)) {
         throw error;
       }
@@ -353,7 +440,19 @@ async function invokeWithRetry<
         error: toErrorMessage(error),
       });
 
-      await wait(delayMs);
+      await wait(delayMs, callerSignal).catch((waitError) => {
+        if (waitError instanceof TransportError) {
+          throw new TransportError(
+            `Request aborted while invoking ${args.spec.action}`,
+            {
+              action: args.spec.action,
+              cause: waitError.cause,
+            },
+          );
+        }
+
+        throw waitError;
+      });
     }
   }
 }

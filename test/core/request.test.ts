@@ -4,6 +4,7 @@ import { createCodingClient } from "../../src/client/createCodingClient.js";
 import { defineActionSpec } from "../../src/core/actionSpec.js";
 import {
   CodingApiError,
+  TransportError,
   TimeoutError,
   UnauthorizedError,
 } from "../../src/core/errors.js";
@@ -114,5 +115,89 @@ describe("invokeAction", () => {
         ProjectName: "demo",
       }),
     ).rejects.toBeInstanceOf(TimeoutError);
+  });
+
+  it("does not retry when the caller aborts an in-flight request", async () => {
+    const controller = new AbortController();
+    const fetchMock = vi.fn(
+      (_input: URL | RequestInfo, init?: RequestInit) =>
+        new Promise<Response>((_resolve, reject) => {
+          if (init?.signal?.aborted) {
+            reject(new DOMException("Aborted", "AbortError"));
+            return;
+          }
+
+          init?.signal?.addEventListener(
+            "abort",
+            () => {
+              reject(new DOMException("Aborted", "AbortError"));
+            },
+            { once: true },
+          );
+        }),
+    );
+
+    const client = createCodingClient({
+      baseUrl: "https://e.coding.net/open-api",
+      fetch: fetchMock,
+      token: "token-value",
+      retry: {
+        maxAttempts: 3,
+      },
+    });
+
+    const result = client.invoke(
+      spec,
+      {
+        ProjectName: "demo",
+      },
+      {
+        signal: controller.signal,
+      },
+    );
+
+    controller.abort();
+
+    await expect(result).rejects.toBeInstanceOf(TransportError);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("retries normal transport failures when retry is enabled", async () => {
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockRejectedValueOnce(new TypeError("network down"))
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            Response: {
+              RequestId: "req-2",
+              Value: "ok-after-retry",
+            },
+          }),
+          { status: 200 },
+        ),
+      );
+
+    const client = createCodingClient({
+      baseUrl: "https://e.coding.net/open-api",
+      fetch: fetchMock,
+      token: "token-value",
+      retry: {
+        maxAttempts: 2,
+        baseDelayMs: 0,
+        maxDelayMs: 0,
+      },
+    });
+
+    await expect(
+      client.invoke(spec, {
+        ProjectName: "demo",
+      }),
+    ).resolves.toEqual({
+      RequestId: "req-2",
+      Value: "ok-after-retry",
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
   });
 });
