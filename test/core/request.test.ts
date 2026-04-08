@@ -26,8 +26,8 @@ const spec = defineActionSpec({
   responseSchema,
 });
 
-describe("invokeAction", () => {
-  it("unwraps the Response envelope and decodes the payload", async () => {
+describe("请求调用测试（invokeAction）", () => {
+  it("会解包 Response 包装层并返回解码后的负载", async () => {
     const fetchMock = vi.fn(async () =>
       new Response(
         JSON.stringify({
@@ -53,7 +53,7 @@ describe("invokeAction", () => {
     expect(result.RequestId).toBe("req-1");
   });
 
-  it("maps CODING Response.Error to a tagged API error", async () => {
+  it("会把 CODING Response.Error 映射为带标签的业务错误", async () => {
     const client = createCodingClient({
       baseUrl: "https://e.coding.net/open-api",
       fetch: async () =>
@@ -79,7 +79,7 @@ describe("invokeAction", () => {
     ).rejects.toBeInstanceOf(CodingApiError);
   });
 
-  it("maps HTTP 401 to UnauthorizedError", async () => {
+  it("会把 HTTP 401 映射为 UnauthorizedError", async () => {
     const client = createCodingClient({
       baseUrl: "https://e.coding.net/open-api",
       fetch: async () => new Response("nope", { status: 401, statusText: "Unauthorized" }),
@@ -93,7 +93,7 @@ describe("invokeAction", () => {
     ).rejects.toBeInstanceOf(UnauthorizedError);
   });
 
-  it("maps timeout aborts to TimeoutError", async () => {
+  it("会把超时导致的中断映射为 TimeoutError", async () => {
     const fetchMock = vi.fn(
       (_input: URL | RequestInfo, init?: RequestInit) =>
         new Promise<Response>((_resolve, reject) => {
@@ -117,7 +117,7 @@ describe("invokeAction", () => {
     ).rejects.toBeInstanceOf(TimeoutError);
   });
 
-  it("does not retry when the caller aborts an in-flight request", async () => {
+  it("当调用方主动取消进行中的请求时不会继续重试", async () => {
     const controller = new AbortController();
     const fetchMock = vi.fn(
       (_input: URL | RequestInfo, init?: RequestInit) =>
@@ -162,7 +162,7 @@ describe("invokeAction", () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
-  it("retries normal transport failures when retry is enabled", async () => {
+  it("启用重试后会重试普通传输失败", async () => {
     const fetchMock = vi
       .fn<typeof fetch>()
       .mockRejectedValueOnce(new TypeError("network down"))

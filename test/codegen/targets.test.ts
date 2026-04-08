@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-describe("codegen 生成目录辅助函数", () => {
+describe("代码生成测试（targets）", () => {
   it("会把 action 临时骨架输出到 scripts/codegen/out", async () => {
     const { resolveTempActionOutputPath } = await import("../../scripts/codegen/shared.mjs");
 

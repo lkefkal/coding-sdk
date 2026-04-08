@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { describeIssueStatusChangeLogList } from "../../src/apis/issues/describeIssueStatusChangeLogList.js";
 import { createCodingClient } from "../../src/client/createCodingClient.js";
 
-describe("describeIssueStatusChangeLogList", () => {
+describe("接口测试（describeIssueStatusChangeLogList）", () => {
   it("会返回解码后的事项状态变更记录", async () => {
     const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
       const body = JSON.parse(String(init?.body));

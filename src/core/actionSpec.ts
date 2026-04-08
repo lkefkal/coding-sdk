@@ -29,6 +29,12 @@ export type InferActionRequest<TSpec extends ActionSpec<AnySchema, AnySchema>> =
 export type InferActionResponse<TSpec extends ActionSpec<AnySchema, AnySchema>> =
   SchemaType<TSpec["responseSchema"]>;
 
+/**
+ * 定义并冻结 action 规格，同时补齐稳定默认值。
+ *
+ * @param spec 当前 action 的规格定义。
+ * @returns 带默认值且已冻结的 action 规格。
+ */
 export function defineActionSpec<
   TRequestSchema extends AnySchema,
   TResponseSchema extends AnySchema,

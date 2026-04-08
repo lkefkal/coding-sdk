@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { deleteServiceHook } from "../../src/apis/serviceHooks/deleteServiceHook.js";
 import { createCodingClient } from "../../src/client/createCodingClient.js";
 
-describe("deleteServiceHook", () => {
+describe("接口测试（deleteServiceHook）", () => {
   it("会返回批量删除结果", async () => {
     const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
       const body = JSON.parse(String(init?.body));

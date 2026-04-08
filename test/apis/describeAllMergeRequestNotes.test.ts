@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { describeAllMergeRequestNotes } from "../../src/apis/mergeRequests/describeAllMergeRequestNotes.js";
 import { createCodingClient } from "../../src/client/createCodingClient.js";
 
-describe("describeAllMergeRequestNotes", () => {
+describe("接口测试（describeAllMergeRequestNotes）", () => {
   it("会同时在 query 和 body 中发送 Action，并返回解码后的全部合并请求评论", async () => {
     const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
       const body = JSON.parse(String(init?.body));

@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { createCodingClient } from "../../src/client/createCodingClient.js";
 import { describeServiceHook } from "../../src/apis/serviceHooks/describeServiceHook.js";
 
-describe("describeServiceHook", () => {
+describe("接口测试（describeServiceHook）", () => {
   it("会返回解码后的单个 Service Hook 详情", async () => {
     const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
       const body = JSON.parse(String(init?.body));

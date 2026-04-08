@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { describeUserProjects } from "../../src/apis/projects/describeUserProjects.js";
 import { createCodingClient } from "../../src/client/createCodingClient.js";
 
-describe("describeUserProjects", () => {
+describe("接口测试（describeUserProjects）", () => {
   it("会在 body 中发送 Action，并返回解码后的已加入项目列表", async () => {
     const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
       const body = JSON.parse(String(init?.body));

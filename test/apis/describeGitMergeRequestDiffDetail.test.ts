@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { describeGitMergeRequestDiffDetail } from "../../src/apis/mergeRequests/describeGitMergeRequestDiffDetail.js";
 import { createCodingClient } from "../../src/client/createCodingClient.js";
 
-describe("describeGitMergeRequestDiffDetail", () => {
+describe("接口测试（describeGitMergeRequestDiffDetail）", () => {
   it("会在 body 中发送 Action，并返回解码后的单文件 diff 详情", async () => {
     const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
       const body = JSON.parse(String(init?.body));

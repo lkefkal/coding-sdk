@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { createCodingClient } from "../../src/client/createCodingClient.js";
 import { describeCodingCurrentUser } from "../../src/apis/user/describeCodingCurrentUser.js";
 
-describe("describeCodingCurrentUser", () => {
+describe("接口测试（describeCodingCurrentUser）", () => {
   it("会同时在 query 和 body 中发送 Action", async () => {
     const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
       const body = JSON.parse(String(init?.body));

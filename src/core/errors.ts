@@ -100,10 +100,22 @@ export class TimeoutError extends CodingSdkError {
   readonly _tag = "TimeoutError" as const;
 }
 
+/**
+ * 判断给定错误是否属于 SDK 定义的稳定错误类型。
+ *
+ * @param error 待判断的错误对象。
+ * @returns 如果属于 SDK 错误，则返回 true。
+ */
 export function isCodingSdkError(error: unknown): error is CodingSdkError {
   return error instanceof CodingSdkError;
 }
 
+/**
+ * 提取错误的可读消息，供日志和包装错误复用。
+ *
+ * @param error 原始错误对象。
+ * @returns 适合面向用户或日志展示的错误消息。
+ */
 export function toErrorMessage(error: unknown): string {
   if (error instanceof Error && error.message.length > 0) {
     return error.message;
@@ -113,5 +125,5 @@ export function toErrorMessage(error: unknown): string {
     return error;
   }
 
-  return "Unknown error";
+  return "未知错误";
 }

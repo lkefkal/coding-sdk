@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { describeIssueReferenceResources } from "../../src/apis/issues/describeIssueReferenceResources.js";
 import { createCodingClient } from "../../src/client/createCodingClient.js";
 
-describe("describeIssueReferenceResources", () => {
+describe("接口测试（describeIssueReferenceResources）", () => {
   it("会返回解码后的事项引用资源列表", async () => {
     const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
       const body = JSON.parse(String(init?.body));

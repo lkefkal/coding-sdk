@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { createCodingClient } from "../../src/client/createCodingClient.js";
 import { deleteMergeRequestReviewer } from "../../src/apis/mergeRequests/deleteMergeRequestReviewer.js";
 
-describe("deleteMergeRequestReviewer", () => {
+describe("接口测试（deleteMergeRequestReviewer）", () => {
   it("会在 body 中发送 Action，并返回解码后的剩余评审者列表", async () => {
     const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
       const body = JSON.parse(String(init?.body));

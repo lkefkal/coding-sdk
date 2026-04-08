@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { describeIssueCustomFieldLogList } from "../../src/apis/issues/describeIssueCustomFieldLogList.js";
 import { createCodingClient } from "../../src/client/createCodingClient.js";
 
-describe("describeIssueCustomFieldLogList", () => {
+describe("接口测试（describeIssueCustomFieldLogList）", () => {
   it("会返回解码后的事项自定义属性变更日志", async () => {
     const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
       const body = JSON.parse(String(init?.body));

@@ -38,10 +38,18 @@ function isRecord(value: unknown): value is JsonRecord {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+/**
+ * 将解码后的请求值收窄为可序列化的对象记录。
+ *
+ * @param value 已经通过 schema 解码的请求值。
+ * @param action 当前调用的 action 名称。
+ * @returns 可直接用于构造请求体的对象记录。
+ * @throws {DecodeError} 当请求 schema 没有解码为对象时抛出。
+ */
 function toJsonRecord(value: unknown, action: string): JsonRecord {
   if (!isRecord(value)) {
     throw new DecodeError(
-      `Request schema for ${action} must decode to an object`,
+      `${action} 的请求 schema 必须解码为对象`,
       {
         action,
         phase: "request",
@@ -52,6 +60,13 @@ function toJsonRecord(value: unknown, action: string): JsonRecord {
   return value;
 }
 
+/**
+ * 合并默认重试配置与本次调用的局部覆盖配置。
+ *
+ * @param defaults 客户端级默认重试配置。
+ * @param overrides 当前调用的重试覆盖配置。
+ * @returns 最终生效的重试配置。
+ */
 function mergeRetryOptions(
   defaults: RetryOptions,
   overrides: Partial<RetryOptions> | undefined,
@@ -65,6 +80,15 @@ function mergeRetryOptions(
   };
 }
 
+/**
+ * 根据 action 规格与调用选项构造最终请求 URL。
+ *
+ * @param baseUrl 客户端基础 URL。
+ * @param spec 当前 action 规格。
+ * @param placement Action 参数放置位置。
+ * @param query 调用方附加的查询参数。
+ * @returns 包含最终查询参数的请求 URL。
+ */
 function buildUrl(
   baseUrl: URL,
   spec: ActionSpec<AnySchema, AnySchema>,
@@ -90,6 +114,14 @@ function buildUrl(
   return url;
 }
 
+/**
+ * 根据 action 放置策略构造最终请求体。
+ *
+ * @param requestBody 解码后的业务请求体。
+ * @param spec 当前 action 规格。
+ * @param placement Action 参数放置位置。
+ * @returns 最终要发送的 JSON 请求体。
+ */
 function buildBody(
   requestBody: JsonRecord,
   spec: ActionSpec<AnySchema, AnySchema>,
@@ -105,6 +137,13 @@ function buildBody(
   return requestBody;
 }
 
+/**
+ * 为单次请求创建超时与父级取消信号的桥接状态。
+ *
+ * @param parentSignal 调用方传入的取消信号。
+ * @param timeoutMs 本次请求的超时时间。
+ * @returns 包含实际请求 signal、超时标记与清理函数的状态对象。
+ */
 function createAbortState(parentSignal: AbortSignal | undefined, timeoutMs: number) {
   const controller = new AbortController();
   let timedOut = false;
@@ -146,6 +185,12 @@ function createAbortState(parentSignal: AbortSignal | undefined, timeoutMs: numb
   };
 }
 
+/**
+ * 判断错误是否为标准 AbortError。
+ *
+ * @param error 待判断的错误对象。
+ * @returns 如果是 AbortError，则返回 true。
+ */
 function isAbortError(error: unknown): boolean {
   return error instanceof Error && error.name === "AbortError";
 }
@@ -177,12 +222,20 @@ function throwIfAborted(action: string, signal: AbortSignal | undefined): void {
     return;
   }
 
-  throw new TransportError(`Request aborted while invoking ${action}`, {
+  throw new TransportError(`调用 ${action} 时请求已被取消`, {
     action,
     cause: signal.reason,
   });
 }
 
+/**
+ * 判断当前错误在本次尝试后是否应继续重试。
+ *
+ * @param error 当前捕获到的错误。
+ * @param retry 当前生效的重试配置。
+ * @param attempt 当前尝试次数，从 1 开始。
+ * @returns 如果应继续重试，则返回 true。
+ */
 function shouldRetry(error: unknown, retry: RetryOptions, attempt: number): boolean {
   if (attempt >= retry.maxAttempts) {
     return false;
@@ -246,18 +299,32 @@ function wait(ms: number, signal: AbortSignal | undefined): Promise<void> {
   });
 }
 
+/**
+ * 计算当前重试尝试对应的指数退避时长。
+ *
+ * @param retry 当前生效的重试配置。
+ * @param attempt 当前尝试次数，从 1 开始。
+ * @returns 本次重试前需要等待的毫秒数。
+ */
 function backoffDelayMs(retry: RetryOptions, attempt: number): number {
   const rawDelay = retry.baseDelayMs * 2 ** Math.max(0, attempt - 1);
   return Math.min(rawDelay, retry.maxDelayMs);
 }
 
+/**
+ * 将未知错误规范化为 SDK 可识别的错误类型。
+ *
+ * @param action 当前调用的 action 名称。
+ * @param error 原始错误对象。
+ * @returns SDK 稳定错误类型。
+ */
 function toCodingSdkError(action: string, error: unknown): Error {
   if (isCodingSdkError(error)) {
     return error;
   }
 
   return new TransportError(
-    `Unexpected failure while invoking ${action}: ${toErrorMessage(error)}`,
+    `调用 ${action} 时发生未预期异常：${toErrorMessage(error)}`,
     {
       action,
       cause: error,
@@ -265,6 +332,17 @@ function toCodingSdkError(action: string, error: unknown): Error {
   );
 }
 
+/**
+ * 使用 effect schema 对输入值执行运行时解码。
+ *
+ * @param schema 当前阶段使用的 schema。
+ * @param value 待解码的原始值。
+ * @param action 当前调用的 action 名称。
+ * @param phase 当前解码阶段。
+ * @param requestId 可选的请求 ID，用于补充错误上下文。
+ * @returns 解码后的强类型结果。
+ * @throws {DecodeError} 当值与 schema 不匹配时抛出。
+ */
 async function decodeWithSchema<TSchema extends AnySchema>(
   schema: TSchema,
   value: unknown,
@@ -276,7 +354,7 @@ async function decodeWithSchema<TSchema extends AnySchema>(
     return await Schema.decodeUnknownPromise(schema)(value);
   } catch (error) {
     throw new DecodeError(
-      `Failed to decode ${phase} payload for ${action}: ${toErrorMessage(error)}`,
+      `${action} 的${phase === "request" ? "请求" : "响应"}负载解码失败：${toErrorMessage(error)}`,
       {
         action,
         cause: error,
@@ -287,6 +365,17 @@ async function decodeWithSchema<TSchema extends AnySchema>(
   }
 }
 
+/**
+ * 执行一次实际的 HTTP 请求尝试，并完成鉴权、解包与解码。
+ *
+ * @param args 单次调用所需的完整参数。
+ * @returns 解码后的 action 响应结果。
+ * @throws {DecodeError} 当请求或响应结构不匹配 schema 时抛出。
+ * @throws {UnauthorizedError} 当 HTTP 或业务层返回鉴权失败时抛出。
+ * @throws {HttpError} 当响应状态码不是成功状态时抛出。
+ * @throws {TimeoutError} 当请求超时时抛出。
+ * @throws {TransportError} 当请求被取消或发生底层传输异常时抛出。
+ */
 async function executeAttempt<
   TRequestSchema extends AnySchema,
   TResponseSchema extends AnySchema,
@@ -313,7 +402,7 @@ async function executeAttempt<
   const timeoutMs = options?.timeoutMs ?? config.timeoutMs;
   const abortState = createAbortState(options?.signal, timeoutMs);
 
-  config.logger?.debug?.("coding-sdk request start", {
+  config.logger?.debug?.("coding-sdk 请求开始", {
     action: spec.action,
     method: spec.method ?? "POST",
     url: url.toString(),
@@ -331,7 +420,7 @@ async function executeAttempt<
       const responseBody = await response.text().catch(() => undefined);
 
       throw new UnauthorizedError(
-        `Unauthorized while invoking ${spec.action}`,
+        `调用 ${spec.action} 时鉴权失败`,
         {
           action: spec.action,
           statusCode: response.status,
@@ -359,7 +448,7 @@ async function executeAttempt<
       payload = await response.json();
     } catch (error) {
       throw new DecodeError(
-        `Failed to parse JSON response for ${spec.action}: ${toErrorMessage(error)}`,
+        `${spec.action} 的 JSON 响应解析失败：${toErrorMessage(error)}`,
         {
           action: spec.action,
           cause: error,
@@ -379,14 +468,14 @@ async function executeAttempt<
     );
   } catch (error) {
     if (abortState.didTimeout()) {
-      throw new TimeoutError(`Request timed out while invoking ${spec.action}`, {
+      throw new TimeoutError(`调用 ${spec.action} 超时`, {
         action: spec.action,
         cause: error,
       });
     }
 
     if (isAbortError(error)) {
-      throw new TransportError(`Request aborted while invoking ${spec.action}`, {
+      throw new TransportError(`调用 ${spec.action} 时请求已被取消`, {
         action: spec.action,
         cause: error,
       });
@@ -394,7 +483,7 @@ async function executeAttempt<
 
     if (!isCodingSdkError(error)) {
       throw new TransportError(
-        `Unexpected failure while invoking ${spec.action}: ${toErrorMessage(error)}`,
+        `调用 ${spec.action} 时发生未预期异常：${toErrorMessage(error)}`,
         {
           action: spec.action,
           cause: error,
@@ -408,6 +497,13 @@ async function executeAttempt<
   }
 }
 
+/**
+ * 按照重试配置执行 action 调用，直到成功或达到终止条件。
+ *
+ * @param args 单次调用所需的完整参数。
+ * @returns 解码后的 action 响应结果。
+ * @throws {Error} 当达到最大重试次数或遇到不可重试错误时抛出。
+ */
 async function invokeWithRetry<
   TRequestSchema extends AnySchema,
   TResponseSchema extends AnySchema,
@@ -433,7 +529,7 @@ async function invokeWithRetry<
 
       const delayMs = backoffDelayMs(retry, attempt);
 
-      args.config.logger?.warn?.("coding-sdk request retry", {
+      args.config.logger?.warn?.("coding-sdk 请求重试", {
         action: args.spec.action,
         attempt,
         delayMs,
@@ -443,7 +539,7 @@ async function invokeWithRetry<
       await wait(delayMs, callerSignal).catch((waitError) => {
         if (waitError instanceof TransportError) {
           throw new TransportError(
-            `Request aborted while invoking ${args.spec.action}`,
+            `调用 ${args.spec.action} 时请求已被取消`,
             {
               action: args.spec.action,
               cause: waitError.cause,
@@ -457,6 +553,12 @@ async function invokeWithRetry<
   }
 }
 
+/**
+ * 以 Promise 形式执行 action 调用运行时。
+ *
+ * @param args 单次调用所需的完整参数。
+ * @returns 解码后的 action 响应结果。
+ */
 export async function invokeActionRuntime<
   TRequestSchema extends AnySchema,
   TResponseSchema extends AnySchema,
@@ -466,6 +568,12 @@ export async function invokeActionRuntime<
   return invokeWithRetry(args);
 }
 
+/**
+ * 以 Effect 形式包装 action 调用运行时，供内部组合式实现复用。
+ *
+ * @param args 单次调用所需的完整参数。
+ * @returns 包含解码结果或稳定错误类型的 Effect。
+ */
 export function invokeActionEffect<
   TRequestSchema extends AnySchema,
   TResponseSchema extends AnySchema,

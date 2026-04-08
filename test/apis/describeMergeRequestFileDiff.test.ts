@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { describeMergeRequestFileDiff } from "../../src/apis/mergeRequests/describeMergeRequestFileDiff.js";
 import { createCodingClient } from "../../src/client/createCodingClient.js";
 
-describe("describeMergeRequestFileDiff", () => {
+describe("接口测试（describeMergeRequestFileDiff）", () => {
   it("会在 body 中发送 Action，并返回解码后的文件修改记录", async () => {
     const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
       const body = JSON.parse(String(init?.body));

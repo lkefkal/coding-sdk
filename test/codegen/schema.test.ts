@@ -2,7 +2,7 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-describe("codegen 共享 schema 模块生成", () => {
+describe("代码生成测试（schema）", () => {
   it("会为已知组件渲染稳定的导出名称", async () => {
     const {
       extractComponentManifest,

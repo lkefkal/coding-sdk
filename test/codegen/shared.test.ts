@@ -2,7 +2,7 @@ import path from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-describe("codegen 共享 schema 复用", () => {
+describe("代码生成测试（shared）", () => {
   it("会为常见 component ref 复用已有共享 schema", async () => {
     const {
       extractActionManifest,

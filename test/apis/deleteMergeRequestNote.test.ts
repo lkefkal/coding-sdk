@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { deleteMergeRequestNote } from "../../src/apis/mergeRequests/deleteMergeRequestNote.js";
 import { createCodingClient } from "../../src/client/createCodingClient.js";
 
-describe("deleteMergeRequestNote", () => {
+describe("接口测试（deleteMergeRequestNote）", () => {
   it("会同时在 query 和 body 中发送 Action，并返回解码后的已删除评论", async () => {
     const fetchMock = vi.fn(async (input: URL | RequestInfo, init?: RequestInit) => {
       const body = JSON.parse(String(init?.body));
