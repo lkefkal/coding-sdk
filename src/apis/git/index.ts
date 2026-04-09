@@ -11,6 +11,30 @@ export type {
 } from "./describeDepotDefaultBranch.js";
 
 export {
+  action as describeGitBlobAction,
+  describeGitBlob,
+  describeGitBlobSpec,
+  requestSchema as describeGitBlobRequestSchema,
+  responseSchema as describeGitBlobResponseSchema,
+} from "./describeGitBlob.js";
+export type {
+  DescribeGitBlobRequest,
+  DescribeGitBlobResponse,
+} from "./describeGitBlob.js";
+
+export {
+  action as describeGitBlobRawAction,
+  describeGitBlobRaw,
+  describeGitBlobRawSpec,
+  requestSchema as describeGitBlobRawRequestSchema,
+  responseSchema as describeGitBlobRawResponseSchema,
+} from "./describeGitBlobRaw.js";
+export type {
+  DescribeGitBlobRawRequest,
+  DescribeGitBlobRawResponse,
+} from "./describeGitBlobRaw.js";
+
+export {
   action as describeGitBranchAction,
   describeGitBranch,
   describeGitBranchSpec,
@@ -57,6 +81,102 @@ export type {
   DescribeGitBranchesByShaRequest,
   DescribeGitBranchesByShaResponse,
 } from "./describeGitBranchesBySha.js";
+
+export {
+  action as describeGitCommitFilePathListAction,
+  describeGitCommitFilePathList,
+  describeGitCommitFilePathListSpec,
+  requestSchema as describeGitCommitFilePathListRequestSchema,
+  responseSchema as describeGitCommitFilePathListResponseSchema,
+} from "./describeGitCommitFilePathList.js";
+export type {
+  DescribeGitCommitFilePathListRequest,
+  DescribeGitCommitFilePathListResponse,
+} from "./describeGitCommitFilePathList.js";
+
+export {
+  action as describeGitCommitInfoAction,
+  describeGitCommitInfo,
+  describeGitCommitInfoSpec,
+  requestSchema as describeGitCommitInfoRequestSchema,
+  responseSchema as describeGitCommitInfoResponseSchema,
+} from "./describeGitCommitInfo.js";
+export type {
+  DescribeGitCommitInfoRequest,
+  DescribeGitCommitInfoResponse,
+} from "./describeGitCommitInfo.js";
+
+export {
+  action as describeGitCommitInfosAction,
+  describeGitCommitInfos,
+  describeGitCommitInfosSpec,
+  requestSchema as describeGitCommitInfosRequestSchema,
+  responseSchema as describeGitCommitInfosResponseSchema,
+} from "./describeGitCommitInfos.js";
+export type {
+  DescribeGitCommitInfosRequest,
+  DescribeGitCommitInfosResponse,
+} from "./describeGitCommitInfos.js";
+
+export {
+  action as describeGitCommitsInPageAction,
+  describeGitCommitsInPage,
+  describeGitCommitsInPageSpec,
+  requestSchema as describeGitCommitsInPageRequestSchema,
+  responseSchema as describeGitCommitsInPageResponseSchema,
+} from "./describeGitCommitsInPage.js";
+export type {
+  DescribeGitCommitsInPageRequest,
+  DescribeGitCommitsInPageResponse,
+} from "./describeGitCommitsInPage.js";
+
+export {
+  action as describeGitFileAction,
+  describeGitFile,
+  describeGitFileSpec,
+  requestSchema as describeGitFileRequestSchema,
+  responseSchema as describeGitFileResponseSchema,
+} from "./describeGitFile.js";
+export type {
+  DescribeGitFileRequest,
+  DescribeGitFileResponse,
+} from "./describeGitFile.js";
+
+export {
+  action as describeGitFileContentAction,
+  describeGitFileContent,
+  describeGitFileContentSpec,
+  requestSchema as describeGitFileContentRequestSchema,
+  responseSchema as describeGitFileContentResponseSchema,
+} from "./describeGitFileContent.js";
+export type {
+  DescribeGitFileContentRequest,
+  DescribeGitFileContentResponse,
+} from "./describeGitFileContent.js";
+
+export {
+  action as describeGitFilesAction,
+  describeGitFiles,
+  describeGitFilesSpec,
+  requestSchema as describeGitFilesRequestSchema,
+  responseSchema as describeGitFilesResponseSchema,
+} from "./describeGitFiles.js";
+export type {
+  DescribeGitFilesRequest,
+  DescribeGitFilesResponse,
+} from "./describeGitFiles.js";
+
+export {
+  action as describeGitFileStatAction,
+  describeGitFileStat,
+  describeGitFileStatSpec,
+  requestSchema as describeGitFileStatRequestSchema,
+  responseSchema as describeGitFileStatResponseSchema,
+} from "./describeGitFileStat.js";
+export type {
+  DescribeGitFileStatRequest,
+  DescribeGitFileStatResponse,
+} from "./describeGitFileStat.js";
 
 export {
   action as describeGitRefAction,
@@ -129,6 +249,18 @@ export type {
   DescribeProjectDepotBranchesRequest,
   DescribeProjectDepotBranchesResponse,
 } from "./describeProjectDepotBranches.js";
+
+export {
+  action as describeGitTreeAction,
+  describeGitTree,
+  describeGitTreeSpec,
+  requestSchema as describeGitTreeRequestSchema,
+  responseSchema as describeGitTreeResponseSchema,
+} from "./describeGitTree.js";
+export type {
+  DescribeGitTreeRequest,
+  DescribeGitTreeResponse,
+} from "./describeGitTree.js";
 
 export {
   action as describeProjectDepotTagsAction,
