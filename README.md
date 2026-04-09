@@ -255,7 +255,7 @@ async function getCredentialFromGateway(): Promise<{
 
 ## 按域导入接口
 
-这个包不会在根入口聚合所有 action。推荐按域导入：
+这个包不会在根入口聚合所有 action。推荐优先按域导入：
 
 ```ts
 import { describeCodingCurrentUser } from 'coding-sdk/apis/user';
@@ -266,6 +266,20 @@ import { describeServiceHooks } from 'coding-sdk/apis/serviceHooks';
 ```
 
 这样可以保持导入边界清晰，也更利于 tree-shaking。
+
+如果你在另一个项目里想先集中浏览当前已公开的 action，也可以使用能力级聚合入口：
+
+```ts
+import {
+  describeCodingCurrentUser,
+  describeIssueList,
+  describeMergeRequest,
+  describeOneProject,
+  describeServiceHooks,
+} from 'coding-sdk/apis';
+```
+
+这个入口主要用于提升导出可发现性；正式接入时，仍建议回到按域导入。
 
 ## 读取事项列表示例
 
@@ -411,6 +425,7 @@ try {
 
 稳定子路径入口：
 
+- `coding-sdk/apis`
 - `coding-sdk/client`
 - `coding-sdk/errors`
 - `coding-sdk/schemas`
