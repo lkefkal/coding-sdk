@@ -83,6 +83,30 @@ export type {
 } from "./describeGitBranchesBySha.js";
 
 export {
+  action as describeGitCommitCommentsAction,
+  describeGitCommitComments,
+  describeGitCommitCommentsSpec,
+  requestSchema as describeGitCommitCommentsRequestSchema,
+  responseSchema as describeGitCommitCommentsResponseSchema,
+} from "./describeGitCommitComments.js";
+export type {
+  DescribeGitCommitCommentsRequest,
+  DescribeGitCommitCommentsResponse,
+} from "./describeGitCommitComments.js";
+
+export {
+  action as describeGitCommitDiffAction,
+  describeGitCommitDiff,
+  describeGitCommitDiffSpec,
+  requestSchema as describeGitCommitDiffRequestSchema,
+  responseSchema as describeGitCommitDiffResponseSchema,
+} from "./describeGitCommitDiff.js";
+export type {
+  DescribeGitCommitDiffRequest,
+  DescribeGitCommitDiffResponse,
+} from "./describeGitCommitDiff.js";
+
+export {
   action as describeGitCommitFilePathListAction,
   describeGitCommitFilePathList,
   describeGitCommitFilePathListSpec,
@@ -119,6 +143,18 @@ export type {
 } from "./describeGitCommitInfos.js";
 
 export {
+  action as describeGitCommitNoteAction,
+  describeGitCommitNote,
+  describeGitCommitNoteSpec,
+  requestSchema as describeGitCommitNoteRequestSchema,
+  responseSchema as describeGitCommitNoteResponseSchema,
+} from "./describeGitCommitNote.js";
+export type {
+  DescribeGitCommitNoteRequest,
+  DescribeGitCommitNoteResponse,
+} from "./describeGitCommitNote.js";
+
+export {
   action as describeGitCommitsInPageAction,
   describeGitCommitsInPage,
   describeGitCommitsInPageSpec,
@@ -129,6 +165,18 @@ export type {
   DescribeGitCommitsInPageRequest,
   DescribeGitCommitsInPageResponse,
 } from "./describeGitCommitsInPage.js";
+
+export {
+  action as describeGitCommitStatusAction,
+  describeGitCommitStatus,
+  describeGitCommitStatusSpec,
+  requestSchema as describeGitCommitStatusRequestSchema,
+  responseSchema as describeGitCommitStatusResponseSchema,
+} from "./describeGitCommitStatus.js";
+export type {
+  DescribeGitCommitStatusRequest,
+  DescribeGitCommitStatusResponse,
+} from "./describeGitCommitStatus.js";
 
 export {
   action as describeGitFileAction,

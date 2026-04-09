@@ -1,5 +1,7 @@
 import { Schema } from "effect";
 
+import { mergeRequestUserSchema } from "./mergeRequests.js";
+
 export const gitCommitterSchema = Schema.Struct({
   Email: Schema.String,
   Name: Schema.String,
@@ -36,6 +38,16 @@ export const gitPageInfoSchema = Schema.Struct({
   TotalRow: Schema.NullOr(Schema.Number),
 });
 
+export const gitStatusCheckResultSchema = Schema.Struct({
+  CommitSha: Schema.NullOr(Schema.String),
+  Context: Schema.NullOr(Schema.String),
+  CreateDate: Schema.NullOr(Schema.Number),
+  DepotId: Schema.NullOr(Schema.Number),
+  Description: Schema.NullOr(Schema.String),
+  State: Schema.NullOr(Schema.String),
+  TargetURL: Schema.NullOr(Schema.String),
+});
+
 export const gitCommitDataSchema = Schema.Struct({
   Commits: Schema.NullOr(Schema.Array(gitDetailedCommitSchema)),
   Page: Schema.NullOr(gitPageInfoSchema),
@@ -45,6 +57,22 @@ export const gitCommitFilePathSchema = Schema.Struct({
   NewPath: Schema.NullOr(Schema.String),
   Path: Schema.NullOr(Schema.String),
   Type: Schema.NullOr(Schema.String),
+});
+
+export const gitCommitCommentSchema = Schema.Struct({
+  Author: mergeRequestUserSchema,
+  CommitSha: Schema.String,
+  Content: Schema.String,
+  CreatedAt: Schema.Number,
+  DepotId: Schema.Number,
+  Id: Schema.Number,
+  Index: Schema.Number,
+  Path: Schema.String,
+});
+
+export const gitCommitCommentsSchema = Schema.Struct({
+  CommitComments: Schema.Array(gitCommitCommentSchema),
+  Page: gitPageInfoSchema,
 });
 
 export const gitBranchInfoSchema = Schema.Struct({
@@ -164,6 +192,8 @@ export type GitBranchInfo = Schema.Schema.Type<typeof gitBranchInfoSchema>;
 export type GitBranchesData = Schema.Schema.Type<typeof gitBranchesDataSchema>;
 export type GitBlobDetail = Schema.Schema.Type<typeof gitBlobDetailSchema>;
 export type GitCommit = Schema.Schema.Type<typeof gitCommitSchema>;
+export type GitCommitComment = Schema.Schema.Type<typeof gitCommitCommentSchema>;
+export type GitCommitComments = Schema.Schema.Type<typeof gitCommitCommentsSchema>;
 export type GitCommitData = Schema.Schema.Type<typeof gitCommitDataSchema>;
 export type GitCommitFilePath = Schema.Schema.Type<typeof gitCommitFilePathSchema>;
 export type GitCommitter = Schema.Schema.Type<typeof gitCommitterSchema>;
@@ -174,6 +204,7 @@ export type GitFileStatPayload = Schema.Schema.Type<typeof gitFileStatPayloadSch
 export type GitPageInfo = Schema.Schema.Type<typeof gitPageInfoSchema>;
 export type GitRef = Schema.Schema.Type<typeof gitRefSchema>;
 export type GitRefInfo = Schema.Schema.Type<typeof gitRefInfoSchema>;
+export type GitStatusCheckResult = Schema.Schema.Type<typeof gitStatusCheckResultSchema>;
 export type GitTag = Schema.Schema.Type<typeof gitTagSchema>;
 export type GitTree = Schema.Schema.Type<typeof gitTreeSchema>;
 export type GitTreeItem = Schema.Schema.Type<typeof gitTreeItemSchema>;

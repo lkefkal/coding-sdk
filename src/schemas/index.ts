@@ -4,6 +4,8 @@ export type { CurrentUser } from "./user.js";
 export {
   gitBlobDetailSchema,
   gitCommitDataSchema,
+  gitCommitCommentSchema,
+  gitCommitCommentsSchema,
   gitCommitFilePathSchema,
   codingCIDepotDetailSchema,
   depotDetailDataSchema,
@@ -20,6 +22,7 @@ export {
   gitPageInfoSchema,
   gitRefInfoSchema,
   gitRefSchema,
+  gitStatusCheckResultSchema,
   gitTagSchema,
   gitTreeItemSchema,
   gitTreeSchema,
@@ -27,6 +30,8 @@ export {
 export type {
   GitBlobDetail,
   GitCommitData,
+  GitCommitComment,
+  GitCommitComments,
   GitCommitFilePath,
   CodingCIDepotDetail,
   DepotDetailData,
@@ -43,6 +48,7 @@ export type {
   GitPageInfo,
   GitRef,
   GitRefInfo,
+  GitStatusCheckResult,
   GitTag,
   GitTree,
   GitTreeItem,
