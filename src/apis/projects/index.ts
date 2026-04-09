@@ -1,4 +1,16 @@
 export {
+  action as describeAllProjectLabelsAction,
+  describeAllProjectLabels,
+  describeAllProjectLabelsSpec,
+  requestSchema as describeAllProjectLabelsRequestSchema,
+  responseSchema as describeAllProjectLabelsResponseSchema,
+} from "./describeAllProjectLabels.js";
+export type {
+  DescribeAllProjectLabelsRequest,
+  DescribeAllProjectLabelsResponse,
+} from "./describeAllProjectLabels.js";
+
+export {
   action as describeCodingProjectsAction,
   describeCodingProjects,
   describeCodingProjectsSpec,
@@ -35,6 +47,18 @@ export type {
 } from "./describeProjectDepots.js";
 
 export {
+  action as describeProjectLabelsAction,
+  describeProjectLabels,
+  describeProjectLabelsSpec,
+  requestSchema as describeProjectLabelsRequestSchema,
+  responseSchema as describeProjectLabelsResponseSchema,
+} from "./describeProjectLabels.js";
+export type {
+  DescribeProjectLabelsRequest,
+  DescribeProjectLabelsResponse,
+} from "./describeProjectLabels.js";
+
+export {
   action as describeProjectMemberPrincipalsAction,
   describeProjectMemberPrincipals,
   describeProjectMemberPrincipalsSpec,
@@ -57,6 +81,18 @@ export type {
   DescribeProjectMembersRequest,
   DescribeProjectMembersResponse,
 } from "./describeProjectMembers.js";
+
+export {
+  action as describeProjectRolesAction,
+  describeProjectRoles,
+  describeProjectRolesSpec,
+  requestSchema as describeProjectRolesRequestSchema,
+  responseSchema as describeProjectRolesResponseSchema,
+} from "./describeProjectRoles.js";
+export type {
+  DescribeProjectRolesRequest,
+  DescribeProjectRolesResponse,
+} from "./describeProjectRoles.js";
 
 export {
   action as describeProjectMergeRequestsAction,

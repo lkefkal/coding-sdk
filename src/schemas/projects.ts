@@ -55,6 +55,14 @@ export const projectRoleSchema = Schema.Struct({
   RoleTypeName: Schema.String,
 });
 
+export const projectLabelSchema = Schema.Struct({
+  Color: Schema.String,
+  CreatorId: Schema.Number,
+  Id: Schema.Number,
+  Name: Schema.String,
+  ProjectId: Schema.Number,
+});
+
 export const projectMemberMemberRefSchema = Schema.Struct({
   Assignee: Schema.NullOr(Schema.Boolean),
   DepartmentId: Schema.NullOr(Schema.Number),
@@ -133,6 +141,7 @@ export type CodingCIProjectDepot = Schema.Schema.Type<typeof codingCIProjectDepo
 export type DescribeProjectCredentialsData = Schema.Schema.Type<typeof describeProjectCredentialsDataSchema>;
 export type DescribeProjectDepotsData = Schema.Schema.Type<typeof describeProjectDepotsDataSchema>;
 export type ProjectCredential = Schema.Schema.Type<typeof projectCredentialSchema>;
+export type ProjectLabel = Schema.Schema.Type<typeof projectLabelSchema>;
 export type ProjectMemberData = Schema.Schema.Type<typeof projectMemberDataSchema>;
 export type ProjectMemberDepartmentMember = Schema.Schema.Type<typeof projectMemberDepartmentMemberSchema>;
 export type ProjectMemberMemberRef = Schema.Schema.Type<typeof projectMemberMemberRefSchema>;
