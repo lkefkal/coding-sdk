@@ -2,6 +2,33 @@ export { currentUserSchema } from "./user.js";
 export type { CurrentUser } from "./user.js";
 
 export {
+  codingCIDepotDetailSchema,
+  depotDetailDataSchema,
+  gitAllTagCommitSchema,
+  gitBranchInfoSchema,
+  gitBranchesDataSchema,
+  gitBranchSchema,
+  gitCommitterSchema,
+  gitCommitSchema,
+  gitRefInfoSchema,
+  gitRefSchema,
+  gitTagSchema,
+} from "./git.js";
+export type {
+  CodingCIDepotDetail,
+  DepotDetailData,
+  GitAllTagCommit,
+  GitBranch,
+  GitBranchInfo,
+  GitBranchesData,
+  GitCommit,
+  GitCommitter,
+  GitRef,
+  GitRefInfo,
+  GitTag,
+} from "./git.js";
+
+export {
   codingCIProjectDepotSchema,
   describeProjectCredentialsDataSchema,
   describeProjectDepotsDataSchema,

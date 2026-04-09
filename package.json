@@ -42,6 +42,10 @@
       "types": "./dist/schemas/issues.d.ts",
       "import": "./dist/schemas/issues.js"
     },
+    "./schemas/git": {
+      "types": "./dist/schemas/git.d.ts",
+      "import": "./dist/schemas/git.js"
+    },
     "./schemas/projects": {
       "types": "./dist/schemas/projects.d.ts",
       "import": "./dist/schemas/projects.js"
@@ -61,6 +65,10 @@
     "./apis/issues": {
       "types": "./dist/apis/issues/index.d.ts",
       "import": "./dist/apis/issues/index.js"
+    },
+    "./apis/git": {
+      "types": "./dist/apis/git/index.d.ts",
+      "import": "./dist/apis/git/index.js"
     },
     "./apis/projects": {
       "types": "./dist/apis/projects/index.d.ts",
